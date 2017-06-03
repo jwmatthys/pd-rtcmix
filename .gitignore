@@ -6,6 +6,7 @@
 *.ko
 *.obj
 *.elf
+*.pd_linux
 
 # Linker output
 *.ilk
