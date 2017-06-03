@@ -637,7 +637,7 @@ endif
 CFLAGS = $(warn.flags) $(optimization.flags) $(arch.c.flags)
 
 # preprocessor flags
-cpp.flags := -DPD -DPDEXT -I "$(PDINCLUDEDIR)" $(cpp.flags) $(CPPFLAGS)
+cpp.flags := -DPD -I "$(PDINCLUDEDIR)" $(cpp.flags) $(CPPFLAGS)
 
 # flags for dependency checking (cflags from makefile may define -I options)
 depcheck.flags := $(cpp.flags) $(cflags)
