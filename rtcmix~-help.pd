@@ -1,5 +1,28 @@
-#N canvas 1 80 450 300 10;
+#N canvas 545 184 450 300 10;
 #X obj 196 149 rtcmix~;
 #X obj 196 119 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
+#X msg 156 69 version;
+#X msg 255 83 verbose \$1;
+#X obj 257 51 hradio 15 1 0 3 empty empty empty 0 -8 0 10 -262144 -1
+-1 2;
+#X floatatom 96 22 5 0 0 0 - - -, f 5;
+#X obj 33 204 rtcmix~ 4 2 hello_kitty.txt;
+#X obj 72 254 dac~ 1 2 3 4;
+#X obj 236 240 print;
+#X floatatom 154 164 5 0 0 0 - - -, f 5;
+#X floatatom 294 163 5 0 0 0 - - -, f 5;
+#X msg 34 150 flush;
 #X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 4 0 3 0;
+#X connect 5 0 0 0;
+#X connect 6 0 7 0;
+#X connect 6 1 7 1;
+#X connect 6 2 7 2;
+#X connect 6 3 7 3;
+#X connect 6 4 8 0;
+#X connect 9 0 6 4;
+#X connect 10 0 6 5;
+#X connect 11 0 6 0;
