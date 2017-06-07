@@ -153,6 +153,8 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 //for the text editor
 static void rtcmix_openeditor(t_rtcmix_tilde *x);
 static void rtcmix_closeeditor(t_rtcmix_tilde *x);
+static void rtcmix_addline(t_rtcmix_tilde *x, t_symbol *s, int argc, t_atom *argv);
+static void rtcmix_clear(t_rtcmix_tilde *x);
 
 void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_badquotes(char *cmd, char *buf); // this is to check for 'split' quoted params, called in rtcmix_dotext

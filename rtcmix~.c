@@ -46,6 +46,8 @@ void rtcmix_tilde_setup(void)
   class_addfloat(rtcmix_tilde_class, rtcmix_tilde_float);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_openeditor, gensym("click"), 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_closeeditor, gensym("close"), 0);
+  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_addline, gensym("addline"), 0);
+  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_clear, gensym("clear"), 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_var, gensym("var"), A_GIMME, 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_varlist, gensym("varlist"), A_GIMME, 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_flush, gensym("flush"), 0);
@@ -206,7 +208,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
   // if the script_flag==CHANGED
   x->livecode_flag = 0;
 */
-  x->x_binbuf = binbuf_new();
+  //x->x_binbuf = binbuf_new();
   x->x_canvas = canvas_getcurrent();
   x->canvas_path = malloc(MAXPDSTRING);
   x->canvas_path = canvas_getdir(x->x_canvas);
@@ -578,7 +580,8 @@ static void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
 	post ("clicked.");
 	x->script_flag[x->current_script] = CHANGED;
-	if (x->x_guiconnect)
+	x->x_binbuf = binbuf_new();
+if (x->x_guiconnect)
   {
     sys_vgui("wm deiconify .x%lx\n", x);
     sys_vgui("raise .x%lx\n", x);
@@ -595,6 +598,22 @@ static void rtcmix_openeditor(t_rtcmix_tilde *x)
  		x->x_guiconnect = guiconnect_new(&x->x_obj.ob_pd, gensym(buf));
  		textbuf_senditup(x);
  	}
+}
+
+static void rtcmix_clear(t_rtcmix_tilde *x)
+{
+    binbuf_clear(x->x_binbuf);
+    textbuf_senditup(x);
+}
+
+static void rtcmix_addline(t_rtcmix_tilde *x, t_symbol *s, int argc, t_atom *argv)
+{
+		UNUSED(s);
+    t_binbuf *z = binbuf_new();
+    binbuf_restore(z, argc, argv);
+    binbuf_add(x->x_binbuf, binbuf_getnatom(z), binbuf_getvec(z));
+    binbuf_free(z);
+    textbuf_senditup(x);
 }
 
 static void rtcmix_closeeditor(t_rtcmix_tilde *x)
