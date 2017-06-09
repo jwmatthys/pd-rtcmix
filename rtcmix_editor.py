@@ -12,7 +12,7 @@ class RoomEditor(Text):
             width=100
             )
 
-        self.filename = None # current document
+        self.filename = "untitled.sco" # current document
 
     def _getfilename(self):
         return self._filename
@@ -25,23 +25,22 @@ class RoomEditor(Text):
 
     filename = property(_getfilename, _setfilename)
 
-    def edit_modified(self, value=None):
-        # Python 2.5's implementation is broken
-        return self.tk.call(self, "edit", "modified", value)
-
-    modified = property(edit_modified, edit_modified)
+		#def edit_modified(self, value=None):
+		#		return self.tk.call(self, "edit", "modified", value)
+    
+    #modified = property(edit_modified, edit_modified)
 
     def load(self, filename):
         text = open(filename).read()
         self.delete(1.0, END)
         self.insert(END, text)
         self.mark_set(INSERT, 1.0)
-        self.modified = False
-        self.filename = filename
+        self.edit_modified ( False )
+        editor.filename = filename
 
     def save(self, filename=None):
         if filename is None:
-            filename = self.filename
+            filename = editor.filename
         f = open(filename, "w")
         s = self.get(1.0, END)
         try:
@@ -51,52 +50,55 @@ class RoomEditor(Text):
             root.quit()
         finally:
             f.close()
-        self.modified = False
-        self.filename = filename
+        self.edit_modified ( False )
+        editor.filename = filename
 
 root = Tk()
-root.title(sys.argv[2])
 editor = RoomEditor(root)
+if (len (sys.argv) > 1):
+	 editor.filename = sys.argv[1]
+root.title(editor.filename)
 editor.pack(fill=Y, expand=1)
 
 editor.focus_set()
 
 try:
-    editor.load(sys.argv[1])
+  	editor.load(editor.filename)
 except (IndexError, IOError):
-    pass
+ 		pass
 
 FILETYPES = [
-    ("Text files", "*.txt"), ("All files", "*")
-    ]
+	("Text files", "*.txt"), ("All files", "*")
+  ]
 
 class Cancel(Exception):
-    pass
+  pass
 
 def open_as():
-    from tkFileDialog import askopenfilename
-    f = askopenfilename(parent=root, filetypes=FILETYPES)
-    if not f:
-        raise Cancel
-    try:
-        editor.load(f)
-    except IOError:
-        from tkMessageBox import showwarning
-        showwarning("Open", "Cannot open the file.")
-        raise Cancel
+  from tkFileDialog import askopenfilename
+  f = askopenfilename(parent=root, filetypes=FILETYPES)
+  if not f:
+    raise Cancel
+  try:
+    editor.load(f)
+  except IOError:
+    from tkMessageBox import showwarning
+    showwarning("Open", "Cannot open the file.")
+    raise Cancel
 
 def save_as():
-    from tkFileDialog import asksaveasfilename
-    f = asksaveasfilename(parent=root, defaultextension=".txt")
-    if not f:
-        raise Cancel
-    try:
-        editor.save(f)
-    except IOError:
-        from tkMessageBox import showwarning
-        showwarning("Save As", "Cannot save the file.")
-        raise Cancel
-
+	from tkFileDialog import asksaveasfilename
+	f = asksaveasfilename(parent=root, defaultextension=".txt")
+	if not f:
+		raise Cancel
+	try:
+		editor.save(f)
+	except IOError:
+		from tkMessageBox import showwarning
+		showwarning("Save As", "Cannot save the file.")
+		raise Cancel
+	root.title(editor.filename)
+		
 def save():
     if editor.filename:
         try:
@@ -109,9 +111,9 @@ def save():
         save_as()
 
 def save_if_modified():
-    if not editor.modified:
+    if editor.edit_modified() == 0:
         return
-    if askyesnocancel(TITLE, "Document modified. Save changes?"):
+    if askyesnocancel(title=editor.filename, message="Document modified. Save changes?"):
         save()
 
 def askyesnocancel(title=None, message=None, **options):
@@ -145,7 +147,7 @@ def file_open(event=None):
 
 def file_save(event=None):
     try:
-        editor.save(sys.argv[1])
+        editor.save(editor.filename)
     except Cancel:
         pass
     return "break"
@@ -158,11 +160,12 @@ def file_save_as(event=None):
     return "break"
 
 def file_quit(event=None):
-    try:
-        editor.save(sys.argv[1])
-    except Cancel:
-        return
-    root.quit()
+		try:
+		    save_if_modified()
+		except Cancel:
+				return "break"
+				pass
+		root.quit()
 
 editor.bind("<Control-n>", file_new)
 editor.bind("<Control-o>", file_open)

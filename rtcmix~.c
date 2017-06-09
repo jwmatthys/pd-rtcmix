@@ -200,7 +200,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
   char *externdir = rtcmix_tilde_class->c_externdir->s_name;
   x->editorpath = malloc(MAXPDSTRING);
   DEBUG(post("dir: %s %i %i",externdir, strlen(externdir),MAXPDSTRING););
-  sprintf(x->editorpath, "\"%s/%s\"", externdir, "tedit/tedit");
+  sprintf(x->editorpath, "python \"%s/%s\"", externdir, "rtcmix_editor.py");
 
   DEBUG(post("rtcmix~: editor_path: %s", x->editorpath););
 
