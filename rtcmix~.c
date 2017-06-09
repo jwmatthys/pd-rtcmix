@@ -50,8 +50,8 @@ void rtcmix_tilde_setup(void)
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_varlist, gensym("varlist"), A_GIMME, 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_flush, gensym("flush"), 0);
 
-  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_read, gensym("read"), A_GIMME, 0);
-  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_read, gensym("load"), A_GIMME, 0);
+  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_read, gensym("read"), A_SYMBOL, 0);
+  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_read, gensym("load"), A_SYMBOL, 0);
 
   //our own messages
   /*
@@ -204,8 +204,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
   DEBUG(post("rtcmix~: editor_path: %s", x->editorpath););
 
   x->current_script = 0;
-  x->rw_flag = RTcmixREADFLAG;
-
+  
   x->rtcmix_script = malloc(MAX_SCRIPTS * MAXSCRIPTSIZE);
   x->tempscript_path = malloc(MAX_SCRIPTS * MAXPDSTRING);
 
@@ -218,12 +217,10 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
       // path to temp script: for script 0 of the first instance of rtcmix~,
       // this should be /tmp/rtcmix0/tempscore0.sco
       sprintf(x->tempscript_path[i],"%s/%s%i.%s",x->tempfolder_path, TEMPSCRIPTNAME, i, SCOREEXTENSION);
-      x->script_flag[i] = UNCHANGED;
       x->numvars[i] = 0;
     }
 
   x->x_canvas = canvas_getcurrent();
-  x->canvas_path = malloc(MAXPDSTRING);
   x->canvas_path = canvas_getdir(x->x_canvas);
 
   x->flushflag = 0; // [flush] sets flag for call to x->flush() in rtcmix_perform() (after pulltraverse completes)
@@ -237,17 +234,11 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
     {
       char* fullpath = malloc(MAXPDSTRING);
     	canvas_makefilename(x->x_canvas, optional_filename->s_name, fullpath, MAXPDSTRING);
-  		//sprintf(sys_cmd, "cp %s %s", fullpath, x->tempscript_path[x->current_script]);
   		sprintf(x->tempscript_path[x->current_script], "%s", fullpath);
-			//x->tempscript_path[x->current_script] = fullpath;
-			/*
-  if (x->verbose == debug)
-    post("cmd: %s",sys_cmd);
-  if (system(sys_cmd))
-    error("rtcmix~: can't open file %s", fullpath);
-    */
-      //sprintf(fullpath,"%s/%s",x->canvas_path->s_name, optional_filename->s_name);
       if (x->verbose == debug) post ("opening scorefile %s", fullpath);
+      t_symbol *default_scorefile = gensym(fullpath);
+      post("default scorefile: %s", default_scorefile->s_name);
+      rtcmix_read(x, default_scorefile);
       free(fullpath);
   free(sys_cmd);
     }
@@ -383,10 +374,10 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         }
         
     free(x->canvas_path);
-		free(x->pd_inbuf);
-		free(x->pd_outbuf);
-	  free(x->var_array);
-	  free(x->var_set);
+	 free(x->pd_inbuf);
+	 free(x->pd_outbuf);
+	 free(x->var_array);
+	 free(x->var_set);
     free(x->rtcmix_script);
     free(x->tempscript_path);
     free(x->editorpath);
@@ -578,26 +569,27 @@ void rtcmix_verbose (t_rtcmix_tilde *x, t_float f)
   post("rtcmix~: verbosity set to %i",(short)f);
 }
 
-static void rtcmix_openeditor(t_rtcmix_tilde *x)
+void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
 	post ("clicked.");
-	//sys_vgui("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
+	sys_vgui("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
 	//post("exec %s %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
-	sys_vgui("pdtk_test .x%lx\n");
-	x->script_flag[x->current_script] = CHANGED;
 }
 
-static void rtcmix_read(t_rtcmix_tilde *x, char* filename)
+static void rtcmix_read(t_rtcmix_tilde *x, t_symbol *s)
 {
+  char* filename = malloc(MAXPDSTRING);
+  canvas_makefilename(x->x_canvas, s->s_name, filename, MAXPDSTRING);
+  //sprintf(filename,"%s/%s", x->canvas_path->s_name, s->s_name);
   if (x->verbose == debug)
-    post("doread %s",filename);
-  FILE *fp = fopen ( filename , "rb" );
+    post("read %s",filename);
+  FILE *fp = fopen ( filename , "r" );
 
   long lSize = 0;
   char *buffer = malloc(MAXSCRIPTSIZE);
   if( fp == NULL )
     {
-      error("rtcmix~: error reading \"%s\"",filename);
+      error("rtcmix~: error reading \"%s\"", filename);
       goto out;
     }
 
@@ -626,10 +618,8 @@ static void rtcmix_read(t_rtcmix_tilde *x, char* filename)
 
   out:
  
-  fclose(fp);  
   x->script_size[x->current_script] = lSize;
-  x->script_flag[x->current_script] = UNCHANGED;
-
+  sprintf(x->tempscript_path[x->current_script], "%s", filename);
   // count how many $ variables are in script
   x->numvars[x->current_script] = 0;
   int i;
@@ -638,10 +628,12 @@ static void rtcmix_read(t_rtcmix_tilde *x, char* filename)
       if ((int)x->rtcmix_script[x->current_script][i] == 36)
         x->numvars[x->current_script]++;
     }
-  free(buffer);
+    post("numvars: %d", x->numvars[x->current_script]);
+    fclose(fp);
+    free(buffer);
 }
 
-static void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
+void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
 {
 	char *str = s->s_name;
 	if (0==strcmp(str,"tedit")) sprintf(x->editorpath, "\"%s/%s\"", x->externdir, "tedit/tedit");

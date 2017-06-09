@@ -1,0 +1,3 @@
+[submodule "tedit"]
+	path = tedit
+	url = https://github.com/jwmatthys/tedit

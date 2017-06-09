@@ -1,4 +1,4 @@
-#N canvas 541 188 450 300 10;
+#N canvas 537 192 677 300 10;
 #X obj 196 149 rtcmix~;
 #X obj 196 119 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
@@ -16,6 +16,7 @@
 #X msg 74 112 editor tedit;
 #X msg 79 137 editor rtcmix;
 #X msg 49 92 editor atom;
+#X msg 350 62 read hello_kitty.txt;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
@@ -32,3 +33,4 @@
 #X connect 12 0 6 0;
 #X connect 13 0 6 0;
 #X connect 14 0 6 0;
+#X connect 15 0 0 0;

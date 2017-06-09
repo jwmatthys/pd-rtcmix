@@ -100,19 +100,13 @@ typedef struct _rtcmix_tilde
   char **rtcmix_script;
   char script_name[MAX_SCRIPTS][256];
   t_int script_size[MAX_SCRIPTS];
-  t_int current_script;
-  t_int rw_flag; // one callback function is run after either save or read; need to differentiate
-  t_int script_flag[MAX_SCRIPTS]; // store script value CHANGED or UNCHANGED (called on goscript)
-  char **tempscript_path;
   t_int numvars[MAX_SCRIPTS];
-  // JWM : introduce an option to always reload temp scores, even if no script_flag is up. This
-  // may slow things down some but could allow for editing of scores in other editors alongsize
-  // Pd, or even for multiple players to ssh in, and edit a temp score during performance.
-  short livecode_flag;
+  t_int current_script;
+  //t_int rw_flag; // one callback function is run after either save or read; need to differentiate
+  char **tempscript_path;
 
   // JWM : canvas objects for callback addressing
   t_canvas *x_canvas;
-	//t_binbuf *x_binbuf;
   t_guiconnect *x_guiconnect;
   t_symbol *canvas_path;
   t_symbol *x_s;
@@ -151,11 +145,11 @@ void rtcmix_verbose(t_rtcmix_tilde *x, t_float f);
 void rtcmix_flush(t_rtcmix_tilde *x);
 void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
+void rtcmix_editor(t_rtcmix_tilde *x, t_symbol *s);
 
 //for the text editor
-static void rtcmix_openeditor(t_rtcmix_tilde *x);
-static void rtcmix_editor(t_rtcmix_tilde *x, t_symbol *s);
-static void rtcmix_read(t_rtcmix_tilde *x, char *filename);
+void rtcmix_openeditor(t_rtcmix_tilde *x);
+static void rtcmix_read(t_rtcmix_tilde *x, t_symbol *s);
 
 void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_badquotes(char *cmd, char *buf); // this is to check for 'split' quoted params, called in rtcmix_dotext
@@ -165,11 +159,9 @@ void rtcmix_livecode(t_rtcmix_tilde *x, t_float f);
 
 void rtcmix_goscript(t_rtcmix_tilde *x, t_float s);
 void rtcmix_setscript(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-//void rtcmix_read(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_save(t_rtcmix_tilde *x);
 void rtcmix_saveas(t_rtcmix_tilde *x);
 void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);
-//static void rtcmix_doread(t_rtcmix_tilde *x, char* filename);
 //static void rtcmix_dosave(t_rtcmix_tilde *x, char* filename);
 
 // for receiving pfields from inlets
