@@ -112,10 +112,11 @@ typedef struct _rtcmix_tilde
 
   // JWM : canvas objects for callback addressing
   t_canvas *x_canvas;
-	t_binbuf *x_binbuf;
+	//t_binbuf *x_binbuf;
   t_guiconnect *x_guiconnect;
   t_symbol *canvas_path;
   t_symbol *x_s;
+  char *editorpath;
 
   // for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
 
@@ -155,6 +156,7 @@ static void rtcmix_openeditor(t_rtcmix_tilde *x);
 static void rtcmix_closeeditor(t_rtcmix_tilde *x);
 static void rtcmix_addline(t_rtcmix_tilde *x, t_symbol *s, int argc, t_atom *argv);
 static void rtcmix_clear(t_rtcmix_tilde *x);
+static void rtcmix_read(t_rtcmix_tilde *x, char *filename);
 
 void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_badquotes(char *cmd, char *buf); // this is to check for 'split' quoted params, called in rtcmix_dotext
@@ -164,7 +166,7 @@ void rtcmix_livecode(t_rtcmix_tilde *x, t_float f);
 
 void rtcmix_goscript(t_rtcmix_tilde *x, t_float s);
 void rtcmix_setscript(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-void rtcmix_read(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
+//void rtcmix_read(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_save(t_rtcmix_tilde *x);
 void rtcmix_saveas(t_rtcmix_tilde *x);
 void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);

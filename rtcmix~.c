@@ -105,7 +105,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 		{
 			case A_SYMBOL:
 	  		optional_filename = argv[this_arg].a_w.w_symbol;
-	  		post("rtcmix~: instantiating with scorefile %s",optional_filename->s_name);
+	  		//post("rtcmix~: instantiating with scorefile %s",optional_filename->s_name);
 	  	break;
 			case A_FLOAT:
 	  		if (float_arg == 1)
@@ -184,7 +184,26 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
       x->var_array[i] = 0.0;
     }
   // the text editor
-  /*
+  
+  char *sys_cmd = malloc(MAXPDSTRING);
+  x->tempfolder_path = malloc(MAXPDSTRING);
+	sprintf(x->tempfolder_path,"/tmp/rtcmixXXXXXX");
+  // create temp folder
+  x->tempfolder_path = mkdtemp(x->tempfolder_path);
+  // create unique name for dylib
+  DEBUG(post("rtcmix~: tempfolder: %s", x->tempfolder_path););
+  // allow other users to read and write (no execute tho)
+  sprintf(sys_cmd, "chmod 766 %s", x->tempfolder_path);
+  if (system(sys_cmd))
+    error ("rtcmix~: error setting temp folder \"%s\" permissions.", x->tempfolder_path);
+
+  char *externdir = rtcmix_tilde_class->c_externdir->s_name;
+  x->editorpath = malloc(MAXPDSTRING);
+  DEBUG(post("dir: %s %i %i",externdir, strlen(externdir),MAXPDSTRING););
+  sprintf(x->editorpath, "\"%s/%s\"", externdir, "tedit/tedit");
+
+  DEBUG(post("rtcmix~: editor_path: %s", x->editorpath););
+
   x->current_script = 0;
   x->rw_flag = RTcmixREADFLAG;
 
@@ -203,6 +222,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
       x->script_flag[i] = UNCHANGED;
       x->numvars[i] = 0;
     }
+  /*
   // turn off livecoding flag by default. This means that
   // rtcmix_goscript will only reload the tempscore from file
   // if the script_flag==CHANGED
@@ -226,10 +246,20 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
   if (optional_filename)
     {
       char* fullpath = malloc(MAXPDSTRING);
-      sprintf(fullpath,"%s/%s",x->canvas_path->s_name, optional_filename->s_name);
+    	canvas_makefilename(x->x_canvas, optional_filename->s_name, fullpath, MAXPDSTRING);
+  		//sprintf(sys_cmd, "cp %s %s", fullpath, x->tempscript_path[x->current_script]);
+  		sprintf(x->tempscript_path[x->current_script], "%s", fullpath);
+			//x->tempscript_path[x->current_script] = fullpath;
+			/*
+  if (x->verbose == debug)
+    post("cmd: %s",sys_cmd);
+  if (system(sys_cmd))
+    error("rtcmix~: can't open file %s", fullpath);
+    */
+      //sprintf(fullpath,"%s/%s",x->canvas_path->s_name, optional_filename->s_name);
       if (x->verbose == debug) post ("opening scorefile %s", fullpath);
-      //rtcmix_callback(x,gensym(fullpath));
       free(fullpath);
+  free(sys_cmd);
     }
   return (void *)x;
 }
@@ -355,13 +385,13 @@ t_int *rtcmix_tilde_perform(t_int *w)
 void rtcmix_tilde_free(t_rtcmix_tilde *x)
 {
       int i;
-      /*
+      
     for (i=0; i<MAX_SCRIPTS; i++)
       {
         free(x->rtcmix_script[i]);
         free(x->tempscript_path[i]);
         }
-        */
+        
     free(x->canvas_path);
 		free(x->pd_inbuf);
 		free(x->pd_outbuf);
@@ -369,7 +399,7 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
 	  free(x->var_set);
     free(x->rtcmix_script);
     free(x->tempscript_path);
-		binbuf_free(x->x_binbuf);
+		//binbuf_free(x->x_binbuf);
     if (x->verbose == debug)
       post ("rtcmix~ DESTROYED!");
 	RTcmix_destroy();
@@ -558,12 +588,15 @@ void rtcmix_verbose (t_rtcmix_tilde *x, t_float f)
 
 static void textbuf_senditup(t_rtcmix_tilde *x)
 {
-    int i, ntxt;
-    char *txt;
+    //int i, ntxt;
+    //char *txt;
     if (!x->x_guiconnect)
         return;
-    binbuf_gettext(x->x_binbuf, &txt, &ntxt);
+    //binbuf_gettext(x->x_binbuf, &txt, &ntxt);
     sys_vgui("pdtk_textwindow_clear .x%lx\n", x);
+    post("appending text %s", x->rtcmix_script[x->current_script]);
+    sys_vgui("pdtk_textwindow_append .x%lx {%s}\n", x, x->rtcmix_script[x->current_script]);
+    /*
     for (i = 0; i < ntxt; )
     {
         char *j = strchr(txt+i, '\n');
@@ -571,16 +604,19 @@ static void textbuf_senditup(t_rtcmix_tilde *x)
         sys_vgui("pdtk_textwindow_append .x%lx {%.*s\n}\n",
             x, j-txt-i, txt+i);
         i = (j-txt)+1;
-    }
+    }*/
     sys_vgui("pdtk_textwindow_setdirty .x%lx 0\n", x);
-    t_freebytes(txt, ntxt);
+    //t_freebytes(txt, ntxt);
 }
 
 static void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
 	post ("clicked.");
+	sys_vgui("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
+	post("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
 	x->script_flag[x->current_script] = CHANGED;
-	x->x_binbuf = binbuf_new();
+	//x->x_binbuf = binbuf_new();
+	/*
 if (x->x_guiconnect)
   {
     sys_vgui("wm deiconify .x%lx\n", x);
@@ -590,30 +626,45 @@ if (x->x_guiconnect)
   else
   {
 	  char buf[40];
-		sys_vgui("pdtk_textwindow_open .x%lx %dx%d {%s.%s} %d\n",
-   		x, 600, 340, "untitled", "sco",
+		sys_vgui("pdtk_textwindow_open .x%lx %dx%d {%s} %d\n",
+   		x, 600, 340, "untitled",
    		sys_hostfontsize(glist_getfont(x->x_canvas),
    		glist_getzoom(x->x_canvas)));
     sprintf(buf, ".x%lx", (unsigned long)x);
  		x->x_guiconnect = guiconnect_new(&x->x_obj.ob_pd, gensym(buf));
  		textbuf_senditup(x);
  	}
+ 	*/
 }
 
 static void rtcmix_clear(t_rtcmix_tilde *x)
 {
-    binbuf_clear(x->x_binbuf);
-    textbuf_senditup(x);
+	post("saving");
+	sys_vgui("set lin [.x%lx.text get 1.0 end]\n pdsend [concat .x%lx textout $lin]\n",x);
+    //binbuf_clear(x->x_binbuf);
+    //textbuf_senditup(x
+   
 }
 
 static void rtcmix_addline(t_rtcmix_tilde *x, t_symbol *s, int argc, t_atom *argv)
 {
 		UNUSED(s);
-    t_binbuf *z = binbuf_new();
-    binbuf_restore(z, argc, argv);
-    binbuf_add(x->x_binbuf, binbuf_getnatom(z), binbuf_getvec(z));
-    binbuf_free(z);
-    textbuf_senditup(x);
+		//int this_arg;
+		//post("addline: %s", s->s_name);
+		/*
+		for (this_arg=0; this_arg<argc; this_arg++)
+  	{
+    if (argv[this_arg].a_type == A_SYMBOL)
+			post("%d %s", argc, argv[this_arg].a_w.w_symbol.s_name);
+		}*/
+		//post ("addline: %s",argv->a_w.w_symbol->s_name);
+    //t_binbuf *z = binbuf_new();
+    //binbuf_restore(z, argc, argv);
+    //binbuf_print(z);
+    //binbuf_add(x->x_binbuf, binbuf_getnatom(z), binbuf_getvec(z));
+    //binbuf_free(z);
+    //post("addline");
+    //textbuf_senditup(x);
 }
 
 static void rtcmix_closeeditor(t_rtcmix_tilde *x)
@@ -624,4 +675,58 @@ static void rtcmix_closeeditor(t_rtcmix_tilde *x)
     guiconnect_notarget(x->x_guiconnect, 1000);
     x->x_guiconnect = 0;
   }
+}
+
+static void rtcmix_read(t_rtcmix_tilde *x, char* filename)
+{
+  if (x->verbose == debug)
+    post("doread %s",filename);
+  FILE *fp = fopen ( filename , "rb" );
+
+  long lSize = 0;
+  char *buffer = malloc(MAXSCRIPTSIZE);
+  if( fp == NULL )
+    {
+      error("rtcmix~: error reading \"%s\"",filename);
+      goto out;
+    }
+
+  fseek( fp , 0L , SEEK_END);
+  lSize = ftell( fp );
+  rewind( fp );
+
+  if (lSize>MAXSCRIPTSIZE)
+    {
+      error("rtcmix~: error: file is longer than MAXSCRIPTSIZE");
+      goto out;
+    }
+
+  post("rtcmix~: read \"%s\"", filename);
+
+  if( fread( buffer , lSize, 1, fp) != 1 )
+    {
+      // error if file is empty; this is not necessary an error
+      // if you close the editor with an empty file
+      error("rtcmix~: failed to read file");
+      goto out;
+    }
+    
+  if (lSize>0)
+    sprintf(x->rtcmix_script[x->current_script], "%s",buffer);
+
+  out:
+ 
+  fclose(fp);  
+  x->script_size[x->current_script] = lSize;
+  x->script_flag[x->current_script] = UNCHANGED;
+
+  // count how many $ variables are in script
+  x->numvars[x->current_script] = 0;
+  int i;
+  for (i=0; i<x->script_size[x->current_script]; i++)
+    {
+      if ((int)x->rtcmix_script[x->current_script][i] == 36)
+        x->numvars[x->current_script]++;
+    }
+  free(buffer);
 }
