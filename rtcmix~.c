@@ -45,12 +45,13 @@ void rtcmix_tilde_setup(void)
   class_addbang(rtcmix_tilde_class, rtcmix_tilde_bang); // trigger scripts
   class_addfloat(rtcmix_tilde_class, rtcmix_tilde_float);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_openeditor, gensym("click"), 0);
-  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_closeeditor, gensym("close"), 0);
-  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_addline, gensym("addline"), 0);
-  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_clear, gensym("clear"), 0);
+  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_editor, gensym("editor"), A_SYMBOL, 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_var, gensym("var"), A_GIMME, 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_varlist, gensym("varlist"), A_GIMME, 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_flush, gensym("flush"), 0);
+
+  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_read, gensym("read"), A_GIMME, 0);
+  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_read, gensym("load"), A_GIMME, 0);
 
   //our own messages
   /*
@@ -61,8 +62,6 @@ void rtcmix_tilde_setup(void)
   // these will all change with new editor...
 /*  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_goscript, gensym("goscript"), A_FLOAT, 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_setscript, gensym("setscript"), A_GIMME, 0);
-  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_read, gensym("read"), A_GIMME, 0);
-  class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_read, gensym("load"), A_GIMME, 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_save, gensym("save"), 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_saveas, gensym("saveas"), 0);
   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_save, gensym("write"), 0);
@@ -197,10 +196,10 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
   if (system(sys_cmd))
     error ("rtcmix~: error setting temp folder \"%s\" permissions.", x->tempfolder_path);
 
-  char *externdir = rtcmix_tilde_class->c_externdir->s_name;
+  x->externdir = rtcmix_tilde_class->c_externdir->s_name;
   x->editorpath = malloc(MAXPDSTRING);
-  DEBUG(post("dir: %s %i %i",externdir, strlen(externdir),MAXPDSTRING););
-  sprintf(x->editorpath, "python \"%s/%s\"", externdir, "rtcmix_editor.py");
+  DEBUG(post("dir: %s %i %i",x->externdir, strlen(x->externdir),MAXPDSTRING););
+  sprintf(x->editorpath, "python \"%s/%s\"", x->externdir, "rtcmix_editor.py");
 
   DEBUG(post("rtcmix~: editor_path: %s", x->editorpath););
 
@@ -222,22 +221,13 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
       x->script_flag[i] = UNCHANGED;
       x->numvars[i] = 0;
     }
-  /*
-  // turn off livecoding flag by default. This means that
-  // rtcmix_goscript will only reload the tempscore from file
-  // if the script_flag==CHANGED
-  x->livecode_flag = 0;
-*/
-  //x->x_binbuf = binbuf_new();
+
   x->x_canvas = canvas_getcurrent();
   x->canvas_path = malloc(MAXPDSTRING);
   x->canvas_path = canvas_getdir(x->x_canvas);
 
   x->flushflag = 0; // [flush] sets flag for call to x->flush() in rtcmix_perform() (after pulltraverse completes)
   x->verbose = debug;
-  // JWM: since Pd has no decent text editor, I created a simple Text GUI object in
-  // Python. It reads temp.sco and rewrites when it's altered. [rtcmix~] reads that
-  // temp.sco file, so we need to be sure it exists.
 
   post("rtcmix~ --- RTcmix music language, http://rtcmix.org ---");
   post("rtcmix~ version%s by Joel Matthys", VERSION);
@@ -399,6 +389,8 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
 	  free(x->var_set);
     free(x->rtcmix_script);
     free(x->tempscript_path);
+    free(x->editorpath);
+    free(x->externdir);
 		//binbuf_free(x->x_binbuf);
     if (x->verbose == debug)
       post ("rtcmix~ DESTROYED!");
@@ -586,95 +578,13 @@ void rtcmix_verbose (t_rtcmix_tilde *x, t_float f)
   post("rtcmix~: verbosity set to %i",(short)f);
 }
 
-static void textbuf_senditup(t_rtcmix_tilde *x)
-{
-    //int i, ntxt;
-    //char *txt;
-    if (!x->x_guiconnect)
-        return;
-    //binbuf_gettext(x->x_binbuf, &txt, &ntxt);
-    sys_vgui("pdtk_textwindow_clear .x%lx\n", x);
-    post("appending text %s", x->rtcmix_script[x->current_script]);
-    sys_vgui("pdtk_textwindow_append .x%lx {%s}\n", x, x->rtcmix_script[x->current_script]);
-    /*
-    for (i = 0; i < ntxt; )
-    {
-        char *j = strchr(txt+i, '\n');
-        if (!j) j = txt + ntxt;
-        sys_vgui("pdtk_textwindow_append .x%lx {%.*s\n}\n",
-            x, j-txt-i, txt+i);
-        i = (j-txt)+1;
-    }*/
-    sys_vgui("pdtk_textwindow_setdirty .x%lx 0\n", x);
-    //t_freebytes(txt, ntxt);
-}
-
 static void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
 	post ("clicked.");
-	sys_vgui("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
-	post("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
+	//sys_vgui("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
+	//post("exec %s %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
+	sys_vgui("pdtk_test .x%lx\n");
 	x->script_flag[x->current_script] = CHANGED;
-	//x->x_binbuf = binbuf_new();
-	/*
-if (x->x_guiconnect)
-  {
-    sys_vgui("wm deiconify .x%lx\n", x);
-    sys_vgui("raise .x%lx\n", x);
-    sys_vgui("focus .x%lx.text\n", x);
-  }
-  else
-  {
-	  char buf[40];
-		sys_vgui("pdtk_textwindow_open .x%lx %dx%d {%s} %d\n",
-   		x, 600, 340, "untitled",
-   		sys_hostfontsize(glist_getfont(x->x_canvas),
-   		glist_getzoom(x->x_canvas)));
-    sprintf(buf, ".x%lx", (unsigned long)x);
- 		x->x_guiconnect = guiconnect_new(&x->x_obj.ob_pd, gensym(buf));
- 		textbuf_senditup(x);
- 	}
- 	*/
-}
-
-static void rtcmix_clear(t_rtcmix_tilde *x)
-{
-	post("saving");
-	sys_vgui("set lin [.x%lx.text get 1.0 end]\n pdsend [concat .x%lx textout $lin]\n",x);
-    //binbuf_clear(x->x_binbuf);
-    //textbuf_senditup(x
-   
-}
-
-static void rtcmix_addline(t_rtcmix_tilde *x, t_symbol *s, int argc, t_atom *argv)
-{
-		UNUSED(s);
-		//int this_arg;
-		//post("addline: %s", s->s_name);
-		/*
-		for (this_arg=0; this_arg<argc; this_arg++)
-  	{
-    if (argv[this_arg].a_type == A_SYMBOL)
-			post("%d %s", argc, argv[this_arg].a_w.w_symbol.s_name);
-		}*/
-		//post ("addline: %s",argv->a_w.w_symbol->s_name);
-    //t_binbuf *z = binbuf_new();
-    //binbuf_restore(z, argc, argv);
-    //binbuf_print(z);
-    //binbuf_add(x->x_binbuf, binbuf_getnatom(z), binbuf_getvec(z));
-    //binbuf_free(z);
-    //post("addline");
-    //textbuf_senditup(x);
-}
-
-static void rtcmix_closeeditor(t_rtcmix_tilde *x)
-{
-  sys_vgui("pdtk_textwindow_doclose .x%lx\n", x);
-  if (x->x_guiconnect)
-  {
-    guiconnect_notarget(x->x_guiconnect, 1000);
-    x->x_guiconnect = 0;
-  }
 }
 
 static void rtcmix_read(t_rtcmix_tilde *x, char* filename)
@@ -729,4 +639,13 @@ static void rtcmix_read(t_rtcmix_tilde *x, char* filename)
         x->numvars[x->current_script]++;
     }
   free(buffer);
+}
+
+static void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
+{
+	char *str = s->s_name;
+	if (0==strcmp(str,"tedit")) sprintf(x->editorpath, "\"%s/%s\"", x->externdir, "tedit/tedit");
+	else if (0==strcmp(str,"rtcmix")) sprintf(x->editorpath, "python \"%s/%s\"", x->externdir, "rtcmix_editor.py");
+	else sprintf(x->editorpath, "\"%s\"", str);
+	post("setting the text editor to %s",str);
 }

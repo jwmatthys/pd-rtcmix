@@ -170,7 +170,7 @@ def file_quit(event=None):
 editor.bind("<Control-n>", file_new)
 editor.bind("<Control-o>", file_open)
 editor.bind("<Control-s>", file_save)
-editor.bind("<Control-Shift-S>", file_save_as)
+#editor.bind("<Control-Shift-S>", file_save_as)
 editor.bind("<Control-q>", file_quit)
 editor.bind("<Control-w>", file_quit)
 

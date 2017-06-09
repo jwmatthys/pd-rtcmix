@@ -117,6 +117,7 @@ typedef struct _rtcmix_tilde
   t_symbol *canvas_path;
   t_symbol *x_s;
   char *editorpath;
+  char *externdir;
 
   // for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
 
@@ -153,9 +154,7 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 
 //for the text editor
 static void rtcmix_openeditor(t_rtcmix_tilde *x);
-static void rtcmix_closeeditor(t_rtcmix_tilde *x);
-static void rtcmix_addline(t_rtcmix_tilde *x, t_symbol *s, int argc, t_atom *argv);
-static void rtcmix_clear(t_rtcmix_tilde *x);
+static void rtcmix_editor(t_rtcmix_tilde *x, t_symbol *s);
 static void rtcmix_read(t_rtcmix_tilde *x, char *filename);
 
 void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);

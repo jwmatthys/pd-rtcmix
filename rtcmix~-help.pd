@@ -1,4 +1,4 @@
-#N canvas 545 184 450 300 10;
+#N canvas 541 188 450 300 10;
 #X obj 196 149 rtcmix~;
 #X obj 196 119 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
@@ -12,7 +12,10 @@
 #X obj 236 240 print;
 #X floatatom 154 164 5 0 0 0 - - -, f 5;
 #X floatatom 294 163 5 0 0 0 - - -, f 5;
-#X msg 34 150 flush;
+#X msg 33 64 flush;
+#X msg 74 112 editor tedit;
+#X msg 79 137 editor rtcmix;
+#X msg 49 92 editor atom;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
@@ -26,3 +29,6 @@
 #X connect 9 0 6 4;
 #X connect 10 0 6 5;
 #X connect 11 0 6 0;
+#X connect 12 0 6 0;
+#X connect 13 0 6 0;
+#X connect 14 0 6 0;
