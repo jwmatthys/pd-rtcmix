@@ -1,4 +1,4 @@
-#N canvas 537 192 677 300 10;
+#N canvas 527 202 677 300 10;
 #X obj 196 149 rtcmix~;
 #X obj 196 119 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
@@ -6,7 +6,7 @@
 #X msg 255 83 verbose \$1;
 #X obj 257 51 hradio 15 1 0 3 empty empty empty 0 -8 0 10 -262144 -1
 -1 2;
-#X floatatom 96 22 5 0 0 0 - - -, f 5;
+#X floatatom 230 21 5 0 0 0 - - -, f 5;
 #X obj 33 204 rtcmix~ 4 2 hello_kitty.txt;
 #X obj 72 254 dac~ 1 2 3 4;
 #X obj 236 240 print;
@@ -17,6 +17,13 @@
 #X msg 79 137 editor rtcmix;
 #X msg 49 92 editor atom;
 #X msg 350 62 read hello_kitty.txt;
+#X msg 380 109 read foo.sco;
+#X msg 379 133 open;
+#X msg 537 102 save boo.sco;
+#X msg 445 137 save;
+#X msg 37 37 setscript \$1;
+#X obj 40 9 hradio 15 1 0 8 empty empty empty 0 -8 0 10 -262144 -1
+-1 1;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
@@ -34,3 +41,9 @@
 #X connect 13 0 6 0;
 #X connect 14 0 6 0;
 #X connect 15 0 0 0;
+#X connect 16 0 0 0;
+#X connect 17 0 0 0;
+#X connect 18 0 0 0;
+#X connect 19 0 0 0;
+#X connect 20 0 6 0;
+#X connect 21 0 20 0;

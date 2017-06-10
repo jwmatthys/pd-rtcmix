@@ -3,12 +3,8 @@
 
 
 #define TEMPFOLDERPREFIX "/tmp/"
-//#define SCRIPTEDITOR "rtcmix_tilde_scripteditor.py"
-//#define DEPENDSFOLDER "lib"
-//#define DYLIBNAME "rtcmix_tildedylib_linux.so"
-#define TEMPSCRIPTNAME "tempscript"
 #define SCOREEXTENSION "sco"
-
+#define TEMPFILENAME "untitled"
 
 // Compatibility fix for 64bit version of garray stuff
 // http://pure-data.svn.sourceforge.net/viewvc/pure-data/trunk/scripts/guiplugins/64bit-warning-plugin/README.txt?revision=17094&view=markup
@@ -38,15 +34,11 @@
 #define RTcmixREADFLAG 0
 #define RTcmixWRITEFLAG 1
 
-// Editor stuff
-// TODO: rewrite using PD's internal editor
-
-// JWM: since Pd has no decent internal text editor, I use an external application built in python
-// which reads temp.sco, modifies it, and rewrites it. If <modified>, rtcmix_tilde_goscript() rereads the
-// temp file so we're sure to have the most recent edit. Modified also supresses some unnecessary
-// messages in the doread and dosave functions.
-#define UNCHANGED 0
-#define CHANGED 1
+enum read_write_flags {
+	read,
+	write,
+	none
+};
 
 enum verbose_flags {
   silent,
@@ -98,7 +90,6 @@ typedef struct _rtcmix_tilde
 
   // editor stuff
   char **rtcmix_script;
-  char script_name[MAX_SCRIPTS][256];
   t_int script_size[MAX_SCRIPTS];
   t_int numvars[MAX_SCRIPTS];
   t_int current_script;
@@ -119,6 +110,9 @@ typedef struct _rtcmix_tilde
   t_float f;
 
   enum verbose_flags verbose;
+  // since both openpanel and savepanel use the same callback method, we
+  // have to differentiate whether the callback refers to an open or a save
+  enum read_write_flags rw_flag;
 
 } t_rtcmix_tilde;
 
@@ -149,19 +143,19 @@ void rtcmix_editor(t_rtcmix_tilde *x, t_symbol *s);
 
 //for the text editor
 void rtcmix_openeditor(t_rtcmix_tilde *x);
-static void rtcmix_read(t_rtcmix_tilde *x, t_symbol *s);
+void rtcmix_open(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
+void rtcmix_save(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
+static void rtcmix_read(t_rtcmix_tilde *x, char* fn);
+static void rtcmix_write(t_rtcmix_tilde *x, char* fn);
+static void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);
+
+void rtcmix_setscript(t_rtcmix_tilde *x, t_float s);
 
 void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_badquotes(char *cmd, char *buf); // this is to check for 'split' quoted params, called in rtcmix_dotext
 void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s);
 void rtcmix_livecode(t_rtcmix_tilde *x, t_float f);
 
-
-void rtcmix_goscript(t_rtcmix_tilde *x, t_float s);
-void rtcmix_setscript(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-void rtcmix_save(t_rtcmix_tilde *x);
-void rtcmix_saveas(t_rtcmix_tilde *x);
-void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);
 //static void rtcmix_dosave(t_rtcmix_tilde *x, char* filename);
 
 // for receiving pfields from inlets
