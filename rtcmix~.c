@@ -267,7 +267,9 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
   for (i = 0; i < (vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
   for (i = 0; i < (vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
   
-  RTcmix_setparams(x->srate, x->num_outputs, vector_size, 1,0);
+  DEBUG(post("x->srate: %f, x->num_outputs: %d, vector_size %d, 1, 0", x->srate, x->num_outputs, vector_size););
+  RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
+  RTcmix_setparams(x->srate, x->num_outputs, vector_size, 1, 0);
 }
 
 t_int *rtcmix_tilde_perform(t_int *w)
