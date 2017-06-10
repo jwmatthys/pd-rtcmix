@@ -146,7 +146,9 @@ void rtcmix_save(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 static void rtcmix_read(t_rtcmix_tilde *x, char* fn);
 static void rtcmix_write(t_rtcmix_tilde *x, char* fn);
 static void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);
-
+static void rtcmix_bangcallback(void *inContext);
+static void rtcmix_valuescallback(float *values, int numValues, void *inContext);
+static void rtcmix_printcallback(const char *printBuffer, void *inContext);
 void rtcmix_setscript(t_rtcmix_tilde *x, t_float s);
 
 void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);

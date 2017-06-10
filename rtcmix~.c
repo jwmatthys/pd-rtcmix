@@ -81,8 +81,9 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
   // JWM: add optional third argument to autoload scorefile
   t_symbol* optional_filename = NULL;
   
-  // check for symbol to instantiate with scorefile
-  //
+	RTcmix_setBangCallback(rtcmix_bangcallback, x);
+	RTcmix_setValuesCallback(rtcmix_valuescallback, x);
+	RTcmix_setPrintCallback(rtcmix_printcallback, x);
 
   int this_arg;
   int float_arg = 0;
@@ -281,6 +282,10 @@ t_int *rtcmix_tilde_perform(t_int *w)
 
   t_int n = w[x->num_inputs + x->num_outputs + 2]; //number of samples per vector
 
+	checkForBang();
+	checkForVals();
+	checkForPrint();
+	//post ("samples_per_vector: %d", n);
 /*
   //random local vars
   int i, j, k;
@@ -717,5 +722,35 @@ static void rtcmix_callback (t_rtcmix_tilde *x, t_symbol *s)
 		post("default %s (this shouldn't happen)", s->s_name);		
 	}
 	x->rw_flag = none;
+}
+
+static void rtcmix_bangcallback(void *inContext)
+{
+	t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
+	// got a pending bang from MAXBANG()
+	outlet_bang(x->outpointer);
+	//defer_low(x, (method)rtcmix_dobangout, (Symbol *)NULL, 0, (Atom *)NULL);
+}
+
+static void rtcmix_valuescallback(float *values, int numValues, void *inContext)
+{
+	t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
+	int i;
+	// BGG -- I should probably defer this one and the error posts also.  So far not a problem...
+	if (numValues == 1)
+		outlet_float(x->outpointer, (double)(values[0]));
+	else {
+		for (i = 0; i < numValues; i++) SETFLOAT((x->valslist)+i, values[i]);
+		outlet_list(x->outpointer, 0L, numValues, x->valslist);
+	}
+}
+
+static void rtcmix_printcallback(const char *printBuffer, void *inContext)
+{
+	const char *pbufptr = printBuffer;
+	while (strlen(pbufptr) > 0) {
+		post("RTcmix: %s", pbufptr);
+		pbufptr += (strlen(pbufptr) + 1);
+	}
 }
 
