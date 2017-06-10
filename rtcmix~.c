@@ -80,13 +80,13 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
   short num_additional = 0;
   // JWM: add optional third argument to autoload scorefile
   t_symbol* optional_filename = NULL;
-  int float_arg = 0;
-
+  
   // check for symbol to instantiate with scorefile
   //
 
   int this_arg;
-  for (this_arg=0; this_arg<argc; this_arg++)
+  int float_arg = 0;
+for (this_arg=0; this_arg<argc; this_arg++)
   {
     switch (argv[this_arg].a_type)
 		{
@@ -95,22 +95,22 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 	  		//post("rtcmix~: instantiating with scorefile %s",optional_filename->s_name);
 	  	break;
 			case A_FLOAT:
-	  		if (float_arg == 1)
-	    	{
-	    	  num_additional = atom_getint(argv+this_arg);
-	    	  DEBUG(post("rtcmix~: creating with %d pfield inlets",num_additional););
-	    	}
 	  		if (float_arg == 0)
 	    	{
 	      	num_inoutputs = atom_getint(argv+this_arg);
 	      	DEBUG(post("rtcmix~: creating with %d signal inlets and outlets",num_inoutputs););
 	      	float_arg++;
 	    	}
+	  		else if (float_arg == 1)
+	    	{
+	    	  num_additional = atom_getint(argv+this_arg);
+	    	  DEBUG(post("rtcmix~: creating with %d pfield inlets",num_additional););
+	    	}
 	 		default:
 	 		{}
 		}
  	}
-  DEBUG(post("creating %d inlets and outlets and %d additional inlets",num_inoutputs,num_additional););
+  //DEBUG(post("creating %d inlets and outlets and %d additional inlets",num_inoutputs,num_additional););
   if (num_inoutputs < 1) num_inoutputs = 1; // no args, use default of 1 channel in/out
   if ((num_inoutputs + num_additional) > MAX_INPUTS)
     {
