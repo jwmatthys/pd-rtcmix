@@ -206,7 +206,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
       x->rtcmix_script[i] = malloc(MAXSCRIPTSIZE);
       x->tempscript_path[i] = malloc(MAXPDSTRING);
       sprintf(x->tempscript_path[i],"%s/%s%i.%s",x->tempfolder_path, TEMPFILENAME, i, SCOREEXTENSION);
-      DEBUG(post(x->tempscript_path[i],"%s/%s%i.%s",x->tempfolder_path, TEMPFILENAME, i, SCOREEXTENSION););
+      //DEBUG(post(x->tempscript_path[i],"%s/%s%i.%s",x->tempfolder_path, TEMPFILENAME, i, SCOREEXTENSION););
       x->numvars[i] = 0;
     }
 
@@ -233,6 +233,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
   free(sys_cmd);
     }
     x->rw_flag = none;
+    x->buffer_changed = false;
   return (void *)x;
 }
 
@@ -556,6 +557,7 @@ void rtcmix_verbose (t_rtcmix_tilde *x, t_float f)
 void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
 	DEBUG( post ("clicked."););
+	x->buffer_changed = true;
 	sys_vgui("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
 }
 
@@ -616,7 +618,7 @@ static void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
   	  out:
  
 	  x->script_size[x->current_script] = lSize;
-  	  sprintf(x->tempscript_path[x->current_script], fullpath);
+  	  sprintf(x->tempscript_path[x->current_script], "%s", fullpath);
   	  // count how many $ variables are in script
      x->numvars[x->current_script] = 0;
      int i;

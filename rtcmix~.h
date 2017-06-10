@@ -30,10 +30,7 @@
 #define MAXSCRIPTSIZE 16384
 
 // JWM: since Tk's openpanel & savepanel both use callback(),
-// I use a flag to indicate whether we're loading or writing
-#define RTcmixREADFLAG 0
-#define RTcmixWRITEFLAG 1
-
+// we use a flag to indicate whether we're loading or writing
 enum read_write_flags {
 	read,
 	write,
@@ -45,6 +42,8 @@ enum verbose_flags {
   normal,
   debug
 };
+
+typedef enum { false, true } bool;
 
 /*** PD FUNCTIONS ---------------------------------------------------------------------------***/
 
@@ -93,10 +92,13 @@ typedef struct _rtcmix_tilde
   t_int script_size[MAX_SCRIPTS];
   t_int numvars[MAX_SCRIPTS];
   t_int current_script;
-  //t_int rw_flag; // one callback function is run after either save or read; need to differentiate
   char **tempscript_path;
+  // since both openpanel and savepanel use the same callback method, we
+  // have to differentiate whether the callback refers to an open or a save
+  enum read_write_flags rw_flag;
+  bool buffer_changed;
 
-  // JWM : canvas objects for callback addressing
+  // JWM : canvas objects for callback addressing (needed for openpanel and savepanel)
   t_canvas *x_canvas;
   t_guiconnect *x_guiconnect;
   t_symbol *canvas_path;
@@ -105,14 +107,10 @@ typedef struct _rtcmix_tilde
   char *externdir;
 
   // for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
-
   int flushflag;
   t_float f;
 
   enum verbose_flags verbose;
-  // since both openpanel and savepanel use the same callback method, we
-  // have to differentiate whether the callback refers to an open or a save
-  enum read_write_flags rw_flag;
 
 } t_rtcmix_tilde;
 
