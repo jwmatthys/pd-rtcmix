@@ -9,38 +9,38 @@
 // Compatibility fix for 64bit version of garray stuff
 // http://pure-data.svn.sourceforge.net/viewvc/pure-data/trunk/scripts/guiplugins/64bit-warning-plugin/README.txt?revision=17094&view=markup
 /*
-#if (defined PD_MAJOR_VERSION && defined PD_MINOR_VERSION) && (PD_MAJOR_VERSION > 0 || PD_MINOR_VERSION >= 41)
-# define arraynumber_t t_word
-# define array_getarray garray_getfloatwords
-# define array_get(pointer, index) (pointer[index].w_float)
-# define array_set(pointer, index, value) ((pointer[index].w_float)=value)
-#else
-# define arraynumber_t t_float
-# define array_getarray garray_getfloatarray
-# define array_get(pointer, index) (pointer[index])
-# define array_set(pointer, index, value) ((pointer[index])=value)
-#endif
-*/
+ #if (defined PD_MAJOR_VERSION && defined PD_MINOR_VERSION) && (PD_MAJOR_VERSION > 0 || PD_MINOR_VERSION >= 41)
+ # define arraynumber_t t_word
+ # define array_getarray garray_getfloatwords
+ # define array_get(pointer, index) (pointer[index].w_float)
+ # define array_set(pointer, index, value) ((pointer[index].w_float)=value)
+ #else
+ # define arraynumber_t t_float
+ # define array_getarray garray_getfloatarray
+ # define array_get(pointer, index) (pointer[index])
+ # define array_set(pointer, index, value) ((pointer[index])=value)
+ #endif
+ */
 
 #define VERSION "0.9"
 
 #define MAX_INPUTS 20    //switched to 8 for sanity sake (have to contruct manually)
-#define MAX_OUTPUTS 20	//do we ever need more than 8? we'll cross that bridge when we come to it
-#define MAX_SCRIPTS 20	//how many scripts can we store internally
+#define MAX_OUTPUTS 20 //do we ever need more than 8? we'll cross that bridge when we come to it
+#define MAX_SCRIPTS 20 //how many scripts can we store internally
 #define MAXSCRIPTSIZE 16384
 
 // JWM: since Tk's openpanel & savepanel both use callback(),
 // we use a flag to indicate whether we're loading or writing
 enum read_write_flags {
-	read,
-	write,
-	none
+								read,
+								write,
+								none
 };
 
 enum verbose_flags {
-  silent,
-  normal,
-  debug
+								silent,
+								normal,
+								debug
 };
 
 typedef enum { false, true } bool;
@@ -51,58 +51,58 @@ t_class *rtcmix_tilde_class;
 
 typedef struct _rtcmix_tilde
 {
-  //header
-  t_object x_obj;
+								//header
+								t_object x_obj;
 
-  //variables specific to this object
-  float srate;                                        //sample rate
-  short num_inputs, num_outputs;       //number of inputs and outputs
-  short num_pinlets;				// number of inlets for dynamic PField control
-  float *pfield_in;			// values received for dynamic PFields
-  t_outlet *outpointer;
-  t_inlet **signalinlets;
-  t_outlet **signaloutlets;
-  t_inlet **pfieldinlets;
+								//variables specific to this object
+								float srate;                                  //sample rate
+								short num_inputs, num_outputs; //number of inputs and outputs
+								short num_pinlets; // number of inlets for dynamic PField control
+								float *pfield_in; // values received for dynamic PFields
+								t_outlet *outpointer;
+								t_inlet **signalinlets;
+								t_outlet **signaloutlets;
+								t_inlet **pfieldinlets;
 
-  char *tempfolder_path;
-  float *pd_outbuf;
-  float *pd_inbuf;
+								char *tempfolder_path;
+								float *pd_outbuf;
+								float *pd_inbuf;
 
-  // script buffer pointer for large binbuf restores
-  char *restore_buf_ptr;
+								// script buffer pointer for large binbuf restores
+								char *restore_buf_ptr;
 
-  // for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
+								// for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
 #define NVARS 9
-  float *var_array;
-  bool *var_set;
+								float *var_array;
+								bool *var_set;
 
-  // stuff for check_vals
+								// stuff for check_vals
 #define MAXDISPARGS 1024 // from rtcmix_tilde H/maxdispargs.h
-  float thevals[MAXDISPARGS];
-  t_atom valslist[MAXDISPARGS];
+								float thevals[MAXDISPARGS];
+								t_atom valslist[MAXDISPARGS];
 
-  // editor stuff
-  char **rtcmix_script;
-  t_int current_script;
-  char **tempscript_path;
-  // since both openpanel and savepanel use the same callback method, we
-  // have to differentiate whether the callback refers to an open or a save
-  enum read_write_flags rw_flag;
-  bool buffer_changed;
+								// editor stuff
+								char **rtcmix_script;
+								t_int current_script;
+								char **tempscript_path;
+								// since both openpanel and savepanel use the same callback method, we
+								// have to differentiate whether the callback refers to an open or a save
+								enum read_write_flags rw_flag;
+								bool buffer_changed;
 
-  // JWM : canvas objects for callback addressing (needed for openpanel and savepanel)
-  t_canvas *x_canvas;
-  t_guiconnect *x_guiconnect;
-  t_symbol *canvas_path;
-  t_symbol *x_s;
-  char *editorpath;
-  char *externdir;
+								// JWM : canvas objects for callback addressing (needed for openpanel and savepanel)
+								t_canvas *x_canvas;
+								t_guiconnect *x_guiconnect;
+								t_symbol *canvas_path;
+								t_symbol *x_s;
+								char *editorpath;
+								char *externdir;
 
-  // for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
-  bool flushflag;
-  t_float f;
+								// for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
+								bool flushflag;
+								t_float f;
 
-  enum verbose_flags verbose;
+								enum verbose_flags verbose;
 
 } t_rtcmix_tilde;
 
