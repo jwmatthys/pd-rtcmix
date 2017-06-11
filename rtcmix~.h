@@ -161,6 +161,6 @@ void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f);
 void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f);
 void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f);
 void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
-void rtcmix_float_inlet(t_rtcmix_tilde *x, short inlet, t_float f);
+void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
 
 void null_the_pointers(t_rtcmix_tilde *x);

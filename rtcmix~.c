@@ -445,22 +445,20 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
         if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
         RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
-
-        //rtcmix_goscript(x, x->current_script);
 }
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
 {
         DEBUG(post("received float %f",scriptnum); );
         if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
-        //TODO: bounds check
+        if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS) return;
         RTcmix_parseScore(x->rtcmix_script[(int)scriptnum], strlen(x->rtcmix_script[(int)scriptnum]));
 }
 
-void rtcmix_float_inlet(t_rtcmix_tilde *x, short inlet, t_float f)
+void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
 {
         //check to see which input the float came in, then set the appropriate variable value
-        //TODO: bounds check
+        //TODO: bounds check?
         if (inlet >= x->num_pinlets)
         {
                 x->pfield_in[inlet] = f;
@@ -602,8 +600,6 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 
         if( fread( buffer, lSize, 1, fp) != 1 )
         {
-                // error if file is empty; this is not necessary an error
-                // if you close the editor with an empty file
                 error("rtcmix~: failed to read file");
         }
 
@@ -627,20 +623,6 @@ void rtcmix_write(t_rtcmix_tilde *x, char* filename)
                 post("rtcmix~: wrote script %i to %s",x->current_script,filename);
         sprintf(x->tempscript_path[x->current_script], "%s", filename);
         free(sys_cmd);
-        /*
-           FILE *fp;
-           fp = fopen (filename, "w");
-           if( fp == NULL )
-           {
-           error("rtcmix~: error opening \"%s\" for writing", filename);
-           }
-           else
-           {
-           const char* buf = x->rtcmix_script[x->current_script];
-           fputs(buf, fp);
-             sprintf(x->tempscript_path[x->current_script], "%s", filename);
-           }
-           if (fp) fclose(fp);*/
 }
 
 void rtcmix_open(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
