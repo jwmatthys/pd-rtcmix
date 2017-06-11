@@ -47,7 +47,7 @@ typedef enum { false, true } bool;
 
 /*** PD FUNCTIONS ---------------------------------------------------------------------------***/
 
-static t_class *rtcmix_tilde_class;
+t_class *rtcmix_tilde_class;
 
 typedef struct _rtcmix_tilde
 {
@@ -65,6 +65,9 @@ typedef struct _rtcmix_tilde
   //it's essential to have signals.... but we have to know.
   //JWM: We'll see if this works in Pd
   t_outlet *outpointer;
+  t_inlet **signalinlets;
+  t_outlet **signaloutlets;
+  t_inlet **pfieldinlets;
 
   char *tempfolder_path;
   // space for these malloc'd in rtcmix_tilde_dsp()
@@ -107,7 +110,7 @@ typedef struct _rtcmix_tilde
   char *externdir;
 
   // for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
-  int flushflag;
+  bool flushflag;
   t_float f;
 
   enum verbose_flags verbose;
@@ -143,12 +146,12 @@ void rtcmix_editor(t_rtcmix_tilde *x, t_symbol *s);
 void rtcmix_openeditor(t_rtcmix_tilde *x);
 void rtcmix_open(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_save(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-static void rtcmix_read(t_rtcmix_tilde *x, char* fn);
-static void rtcmix_write(t_rtcmix_tilde *x, char* fn);
-static void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);
-static void rtcmix_bangcallback(void *inContext);
-static void rtcmix_valuescallback(float *values, int numValues, void *inContext);
-static void rtcmix_printcallback(const char *printBuffer, void *inContext);
+void rtcmix_read(t_rtcmix_tilde *x, char* fn);
+void rtcmix_write(t_rtcmix_tilde *x, char* fn);
+void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);
+void rtcmix_bangcallback(void *inContext);
+void rtcmix_valuescallback(float *values, int numValues, void *inContext);
+void rtcmix_printcallback(const char *printBuffer, void *inContext);
 void rtcmix_setscript(t_rtcmix_tilde *x, t_float s);
 
 void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
@@ -159,15 +162,15 @@ void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s);
 // JWM: I really wish I didn't have to do it this way, but I must have a new function for
 // each inlet, so... hacking away!
 // TODO: there's probably a way to set up multiple pointers to the same function... need to explore this option...
-static void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp3(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp4(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp5(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
-static void rtcmix_float_inlet(t_rtcmix_tilde *x, short inlet, t_float f);
+void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp3(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp4(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp5(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f);
+void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
+void rtcmix_float_inlet(t_rtcmix_tilde *x, short inlet, t_float f);
 
