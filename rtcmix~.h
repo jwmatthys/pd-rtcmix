@@ -58,19 +58,13 @@ typedef struct _rtcmix_tilde
   float srate;                                        //sample rate
   short num_inputs, num_outputs;       //number of inputs and outputs
   short num_pinlets;				// number of inlets for dynamic PField control
-  float in[MAX_INPUTS];			// values received for dynamic PFields
-  float in_connected[MAX_INPUTS]; //booleans: true if signals connected to the input in question
-  //we use this "connected" boolean so that users can connect *either* signals or floats
-  //to the various inputs; sometimes it's easier just to have floats, but other times
-  //it's essential to have signals.... but we have to know.
-  //JWM: We'll see if this works in Pd
+  float *pfield_in;			// values received for dynamic PFields
   t_outlet *outpointer;
   t_inlet **signalinlets;
   t_outlet **signaloutlets;
   t_inlet **pfieldinlets;
 
   char *tempfolder_path;
-  // space for these malloc'd in rtcmix_tilde_dsp()
   float *pd_outbuf;
   float *pd_inbuf;
 
@@ -80,20 +74,15 @@ typedef struct _rtcmix_tilde
   // for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
 #define NVARS 9
   float *var_array;
-  short *var_set;
+  bool *var_set;
 
   // stuff for check_vals
 #define MAXDISPARGS 1024 // from rtcmix_tilde H/maxdispargs.h
   float thevals[MAXDISPARGS];
   t_atom valslist[MAXDISPARGS];
 
-  // buffer for error-reporting
-  char theerror[MAXPDSTRING];
-
   // editor stuff
   char **rtcmix_script;
-  t_int script_size[MAX_SCRIPTS];
-  t_int numvars[MAX_SCRIPTS];
   t_int current_script;
   char **tempscript_path;
   // since both openpanel and savepanel use the same callback method, we
@@ -174,3 +163,4 @@ void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f);
 void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
 void rtcmix_float_inlet(t_rtcmix_tilde *x, short inlet, t_float f);
 
+void null_the_pointers(t_rtcmix_tilde *x);

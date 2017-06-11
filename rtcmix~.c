@@ -75,6 +75,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 {
   t_rtcmix_tilde *x = (t_rtcmix_tilde *)pd_new(rtcmix_tilde_class);
   UNUSED(s);
+  null_the_pointers(x);
   RTcmix_init();
   short num_inoutputs = 1;
   short num_additional = 0;
@@ -141,10 +142,12 @@ for (this_arg=0; this_arg<argc; this_arg++)
   // gensym "pinlet0", "pinlet1", etc.
   char* inletname = malloc(8);
   x->pfieldinlets = malloc(x->num_pinlets);
+	x->pfield_in = malloc(x->num_pinlets);
   for (i=0; i< x->num_pinlets; i++)
     {
       sprintf(inletname, "pinlet%d", i);
       x->pfieldinlets[i] = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym(inletname));
+      x->pfield_in[i] = 0.0;
     }
   free(inletname);
 
@@ -162,15 +165,15 @@ for (this_arg=0; this_arg<argc; this_arg++)
   // initialize some variables; important to do this!
   for (i = 0; i < (x->num_inputs + x->num_pinlets); i++)
     {
-      x->in[i] = 0.;
+      x->pfield_in[i] = 0.;
     }
 
   // set up for the variable-substitution scheme
   x->var_array = malloc(NVARS * sizeof(float));
-  x->var_set = malloc(NVARS * sizeof(short));
+  x->var_set = malloc(NVARS * sizeof(bool));
   for(i = 0; i < NVARS; i++)
     {
-      x->var_set[i] = 0;
+      x->var_set[i] = false;
       x->var_array[i] = 0.0;
     }
   // the text editor
@@ -205,12 +208,10 @@ for (this_arg=0; this_arg<argc; this_arg++)
 
   for (i=0; i<MAX_SCRIPTS; i++)
     {
-      x->script_size[i] = 0;
       x->rtcmix_script[i] = malloc(MAXSCRIPTSIZE);
       x->tempscript_path[i] = malloc(MAXPDSTRING);
       sprintf(x->tempscript_path[i],"%s/%s%i.%s",x->tempfolder_path, TEMPFILENAME, i, SCOREEXTENSION);
       //DEBUG(post(x->tempscript_path[i],"%s/%s%i.%s",x->tempfolder_path, TEMPFILENAME, i, SCOREEXTENSION););
-      x->numvars[i] = 0;
     }
 
   x->x_canvas = canvas_getcurrent();
@@ -390,7 +391,7 @@ void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
           error("only vars $1 - $9 are allowed");
           return;
         }
-      x->var_set[varnum-1] = 1;
+      x->var_set[varnum-1] = true;
       if (argv[i+1].a_type == A_FLOAT)
           x->var_array[varnum-1] = argv[i+1].a_w.w_float;
     }
@@ -421,7 +422,7 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 
   for (i = 0; i < argc; i++)
     {
-      x->var_set[i] = 1;
+      x->var_set[i] = true;
       if (argv[i].a_type == A_FLOAT)
         x->var_array[i] = argv[i].a_w.w_float;
     }
@@ -459,9 +460,10 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
 void rtcmix_float_inlet(t_rtcmix_tilde *x, short inlet, t_float f)
 {
   //check to see which input the float came in, then set the appropriate variable value
+  //TODO: bounds check
   if (inlet >= x->num_pinlets)
     {
-      x->in[inlet] = f;
+      x->pfield_in[inlet] = f;
       post("rtcmix~: setting in[%d] =  %f, but rtcmix~ doesn't use this", inlet, f);
     }
   else RTcmix_setPField(inlet+1, f);
@@ -581,7 +583,8 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 	  if( fp == NULL )
 	    {
 	      error("rtcmix~: error reading \"%s\"", fullpath);
-	      goto out;
+		    if (fp) fclose(fp);
+		    return;
 	    }
 	
 	  fseek( fp , 0L , SEEK_END);
@@ -591,7 +594,8 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 	  if (lSize>MAXSCRIPTSIZE)
 	  {
 	     error("rtcmix~: error: file is longer than MAXSCRIPTSIZE");
-	     goto out;
+	    if (fp) fclose(fp);
+	    return;
 	  }
 	
 	  post("rtcmix~: read \"%s\"", fullpath);
@@ -601,24 +605,13 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
         // error if file is empty; this is not necessary an error
         // if you close the editor with an empty file
         error("rtcmix~: failed to read file");
-        goto out;
      }
     
 	  if (lSize>0)
    	 sprintf(x->rtcmix_script[x->current_script], "%s",buffer);
  
-	  x->script_size[x->current_script] = lSize;
   	  sprintf(x->tempscript_path[x->current_script], "%s", fullpath);
-  	  // count how many $ variables are in script
-     x->numvars[x->current_script] = 0;
-     int i;
-     for (i=0; i<x->script_size[x->current_script]; i++)
-     {
-        if ((int)x->rtcmix_script[x->current_script][i] == 36)
-           x->numvars[x->current_script]++;
-    }
-    post("numvars: %d", x->numvars[x->current_script]);
-  	  out:
+
     if (fp) fclose(fp);
     
 }
@@ -738,3 +731,26 @@ void rtcmix_printcallback(const char *printBuffer, void *inContext)
 	}
 }
 
+void null_the_pointers(t_rtcmix_tilde *x)
+{
+  x->pfield_in = NULL;
+  x->outpointer = NULL;
+  x->signalinlets = NULL;
+  x->signaloutlets = NULL;
+  x->pfieldinlets = NULL;
+	x->tempfolder_path = NULL;
+  x->pd_inbuf = NULL;
+  x->pd_outbuf = NULL;
+	x->restore_buf_ptr = NULL;
+  x->var_array = NULL;
+  x->var_set = NULL;
+
+  x->rtcmix_script = NULL;
+  x->tempscript_path = NULL;
+  x->x_canvas = NULL;
+  x->x_guiconnect = NULL;
+  x->canvas_path = NULL;
+  x->x_s = NULL;
+  x->editorpath = NULL;
+  x->externdir = NULL;
+}
