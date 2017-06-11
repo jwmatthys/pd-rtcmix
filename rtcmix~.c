@@ -223,7 +223,7 @@ for (this_arg=0; this_arg<argc; this_arg++)
 
   // If filename is given in score instantiation, open scorefile
   if (optional_filename)
-    {
+  {
       char* fullpath = malloc(MAXPDSTRING);
     	canvas_makefilename(x->x_canvas, optional_filename->s_name, fullpath, MAXPDSTRING);
   		//sprintf(x->tempscript_path[x->current_script], "%s", fullpath);
@@ -231,11 +231,11 @@ for (this_arg=0; this_arg<argc; this_arg++)
       //post("default scorefile: %s", default_scorefile->s_name);
       rtcmix_read(x, fullpath);
       free(fullpath);
+     }
   free(sys_cmd);
-    }
     x->rw_flag = none;
     x->buffer_changed = false;
-  return (void *)x;
+    return (void *)x;
 }
 
 void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
@@ -269,8 +269,9 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
   for (i = 0; i < (vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
   
   DEBUG(post("x->srate: %f, x->num_outputs: %d, vector_size %d, 1, 0", x->srate, x->num_outputs, vector_size););
-  RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
-  RTcmix_setparams(x->srate, x->num_outputs, vector_size, 1, 0);
+	RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
+	RTcmix_setparams(x->srate, x->num_outputs, vector_size, 1, 0);
+
 }
 
 t_int *rtcmix_tilde_perform(t_int *w)
@@ -323,29 +324,6 @@ t_int *rtcmix_tilde_perform(t_int *w)
   // this drives the RTcmix sample-computing engine
   //x->pullTraverse();
 
-  // look for a pending bang from MAXBANG()
-  if (x->check_bang() == 1) // JWM: no defer in Pd, and BGG says unnecessary anyway
-    {
-      outlet_bang(x->outpointer);
-    }
-  // look for pending vals from MAXMESSAGE()
-  valflag = x->check_vals(x->thevals);
-
-  if (valflag > 0)
-    {
-      if (valflag == 1) outlet_float(x->outpointer, (double)(x->thevals[0]));
-      else
-        {
-          for (i = 0; i < valflag; i++) SETFLOAT((x->valslist)+i, x->thevals[i]);
-          outlet_list(x->outpointer, 0L, valflag, x->valslist);
-        }
-    }
-  errflag = x->check_error();
-  if (errflag != 0)
-    {
-      if (errflag == 1) post("RTcmix: %s", x->theerror);
-      else error("RTcmix: %s", x->theerror);
-    }
 */
 
   // reset queue and heap if signalled
@@ -459,16 +437,21 @@ void rtcmix_flush(t_rtcmix_tilde *x)
 // bang triggers the current working script
 void rtcmix_tilde_bang(t_rtcmix_tilde *x)
 {
-  DEBUG(post("rtcmix~: received bang"););
+   DEBUG(post("rtcmix~: received bang"););
 
-  if (x->flushflag == 1) return; // heap and queue being reset
+   if (x->flushflag == 1) return; // heap and queue being reset
+   if (canvas_dspstate == 0) return;
+	RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 
   //rtcmix_goscript(x, x->current_script);
 }
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
 {
   DEBUG(post("received float %f",scriptnum););
-  //rtcmix_goscript(x, scriptnum);
+   if (x->flushflag == 1) return; // heap and queue being reset
+   if (canvas_dspstate == 0) return;
+   //TODO: bounds check
+	RTcmix_parseScore(x->rtcmix_script[(int)scriptnum], strlen(x->rtcmix_script[(int)scriptnum]));
 }
 
 static void rtcmix_float_inlet(t_rtcmix_tilde *x, short inlet, t_float f)
@@ -592,7 +575,7 @@ static void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 	  DEBUG( post("read %s",fullpath););
 	  FILE *fp = fopen ( fullpath , "r" );
 	  long lSize = 0;
-	  char *buffer = malloc(MAXSCRIPTSIZE);
+	  char buffer [MAXSCRIPTSIZE];
 	  if( fp == NULL )
 	    {
 	      error("rtcmix~: error reading \"%s\"", fullpath);
@@ -621,8 +604,6 @@ static void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
     
 	  if (lSize>0)
    	 sprintf(x->rtcmix_script[x->current_script], "%s",buffer);
-
-  	  out:
  
 	  x->script_size[x->current_script] = lSize;
   	  sprintf(x->tempscript_path[x->current_script], "%s", fullpath);
@@ -635,8 +616,8 @@ static void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
            x->numvars[x->current_script]++;
     }
     post("numvars: %d", x->numvars[x->current_script]);
+  	  out:
     if (fp) fclose(fp);
-    free(buffer);
     
 }
 
@@ -747,6 +728,7 @@ static void rtcmix_valuescallback(float *values, int numValues, void *inContext)
 
 static void rtcmix_printcallback(const char *printBuffer, void *inContext)
 {
+	UNUSED(inContext);
 	const char *pbufptr = printBuffer;
 	while (strlen(pbufptr) > 0) {
 		post("RTcmix: %s", pbufptr);

@@ -1,0 +1,7 @@
+#N canvas 644 190 450 300 10;
+#X msg 148 75 bang;
+#X obj 149 117 rtcmix~ 2 longchain.sco;
+#X obj 205 174 dac~;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
+#X connect 1 1 2 1;

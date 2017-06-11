@@ -1,4 +1,4 @@
-#N canvas 525 204 677 300 10;
+#N canvas 519 210 677 300 10;
 #X obj 196 149 rtcmix~;
 #X obj 196 119 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
@@ -24,6 +24,9 @@
 #X obj 40 9 hradio 15 1 0 8 empty empty empty 0 -8 0 10 -262144 -1
 -1 1;
 #X obj 236 240 print right:;
+#X msg 422 194 bang;
+#X obj 425 234 rtcmix~ 2 longchain.sco;
+#X msg 293 17 bang;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
@@ -47,3 +50,5 @@
 #X connect 18 0 0 0;
 #X connect 19 0 6 0;
 #X connect 20 0 19 0;
+#X connect 22 0 23 0;
+#X connect 24 0 0 0;

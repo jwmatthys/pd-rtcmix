@@ -154,13 +154,11 @@ void rtcmix_setscript(t_rtcmix_tilde *x, t_float s);
 void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_badquotes(char *cmd, char *buf); // this is to check for 'split' quoted params, called in rtcmix_dotext
 void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s);
-void rtcmix_livecode(t_rtcmix_tilde *x, t_float f);
-
-//static void rtcmix_dosave(t_rtcmix_tilde *x, char* filename);
 
 // for receiving pfields from inlets
-// JWM: I really wish I didn't have to do it this way, but I new a new function for
+// JWM: I really wish I didn't have to do it this way, but I must have a new function for
 // each inlet, so... hacking away!
+// TODO: there's probably a way to set up multiple pointers to the same function... need to explore this option...
 static void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f);
 static void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f);
 static void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f);

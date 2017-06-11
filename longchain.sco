@@ -1,7 +1,7 @@
 // This score makes a wavetable synth riff and feeds it through 3 effects
 // in series: flange -> delay -> reverb        -JGG, 6/17/00, rev. 7/12/05
 
-print_off()
+//print_off()
 rtsetparams(44100, 2)
 load("WAVETABLE")
 load("FLANGE")
@@ -93,4 +93,3 @@ rtchandel = 0.05
 cf = 0
 
 REVERBIT(st=0, insk=0, totdur + ringdur, amp, revtime, revpct, rtchandel, cf)
-
