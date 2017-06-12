@@ -71,7 +71,7 @@ void rtcmix_tilde_setup(void)
 }
 
 
-void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
+static void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 {
         t_rtcmix_tilde *x = (t_rtcmix_tilde *)pd_new(rtcmix_tilde_class);
         UNUSED(s);
@@ -141,22 +141,20 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         // inlets to 10 (not sure why we'd need more anyway) and passing each to
         // gensym "pinlet0", "pinlet1", etc.
         char* inletname = malloc(8);
-        x->pfieldinlets = malloc(x->num_pinlets);
         x->pfield_in = malloc(x->num_pinlets);
         for (i=0; i< x->num_pinlets; i++)
         {
                 sprintf(inletname, "pinlet%d", i);
-                x->pfieldinlets[i] = inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym(inletname));
+                inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym(inletname));
                 x->pfield_in[i] = 0.0;
         }
         free(inletname);
 
         // SIGNAL OUTLETS
-        x->signaloutlets = malloc(x->num_outputs);
         for (i = 0; i < x->num_outputs; i++)
         {
                 // outputs, right-to-left
-                x->signaloutlets[i] = outlet_new(&x->x_obj, gensym("signal"));
+                outlet_new(&x->x_obj, gensym("signal"));
         }
 
         // OUTLET FOR BANGS
@@ -197,6 +195,8 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         char buf[50];
         sprintf(buf, "d%lx", (t_int)x);
         x->x_s = gensym(buf);
+        x->x_canvas = canvas_getcurrent();
+        x->canvas_path = canvas_getdir(x->x_canvas);
         pd_bind(&x->x_obj.ob_pd, x->x_s);
 
         DEBUG(post("rtcmix~: editor_path: %s", x->editorpath); );
@@ -213,9 +213,6 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
                 sprintf(x->tempscript_path[i],"%s/%s%i.%s",x->tempfolder_path, TEMPFILENAME, i, SCOREEXTENSION);
                 //DEBUG(post(x->tempscript_path[i],"%s/%s%i.%s",x->tempfolder_path, TEMPFILENAME, i, SCOREEXTENSION););
         }
-
-        x->x_canvas = canvas_getcurrent();
-        x->canvas_path = canvas_getdir(x->x_canvas);
 
         x->flushflag = false;
         x->verbose = debug;
@@ -241,7 +238,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         return (void *)x;
 }
 
-void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
+static void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
 {
         // This is 2 because (for some totally crazy reason) the
         // signal vector starts at 1, not 0
@@ -335,50 +332,50 @@ t_int *rtcmix_tilde_perform(t_int *w)
         return w + x->num_inputs + x->num_outputs + 3;
 }
 
-void rtcmix_tilde_free(t_rtcmix_tilde *x)
+static void rtcmix_tilde_free(t_rtcmix_tilde *x)
 {
         int i;
+        free(x->tempfolder_path);
+        free(x->pd_inbuf);
+        free(x->pd_outbuf);
+        free(x->var_array);
+        free(x->var_set);
+        free(x->x_s);
+        free(x->editorpath);
 
         for (i=0; i<MAX_SCRIPTS; i++)
         {
                 free(x->rtcmix_script[i]);
                 free(x->tempscript_path[i]);
         }
-
-        free(x->canvas_path);
-        free(x->pd_inbuf);
-        free(x->pd_outbuf);
-        free(x->var_array);
-        free(x->var_set);
-        free(x->rtcmix_script);
-        free(x->tempscript_path);
-        free(x->editorpath);
-        free(x->externdir);
+        free (x->rtcmix_script);
+        free (x->tempscript_path);
         outlet_free(x->outpointer);
-        for (i=0; i< x->num_pinlets; i++) inlet_free(x->pfieldinlets[i]);
-        for (i=0; i< x->num_inputs; i++) inlet_free(x->signalinlets[i]);
-        for (i=0; i< x->num_outputs; i++) outlet_free(x->signaloutlets[i]);
 
+        x->canvas_path = NULL;
+        x->externdir = NULL;
+        x->x_canvas = NULL;
+
+        RTcmix_destroy();
         //binbuf_free(x->x_binbuf);
         DEBUG(post ("rtcmix~ DESTROYED!"); );
-        RTcmix_destroy();
 }
 
 // print out the rtcmix~ version
-void rtcmix_version(t_rtcmix_tilde *x)
+static void rtcmix_version(t_rtcmix_tilde *x)
 {
         post("rtcmix~, v. %s by Joel Matthys", VERSION);
         post("compiled at %s on %s",__TIME__, __DATE__);
         outlet_bang(x->outpointer);
 }
 
-void rtcmix_info(t_rtcmix_tilde *x)
+static void rtcmix_info(t_rtcmix_tilde *x)
 {
         rtcmix_version(x);
 }
 
 // the "var" message allows us to set $n variables imbedded in a scorefile with varnum value messages
-void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
+static void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 {
         short i, varnum;
         UNUSED(s);
@@ -409,7 +406,7 @@ void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 
 
 // the "varlist" message allows us to set $n variables imbedded in a scorefile with a list of positional vars
-void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
+static void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 {
         short i;
         UNUSED(s);
@@ -429,7 +426,7 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 }
 
 // the "flush" message
-void rtcmix_flush(t_rtcmix_tilde *x)
+static void rtcmix_flush(t_rtcmix_tilde *x)
 {
         DEBUG( post("flushing"); );
         if (x->flushflag == true) return; // heap and queue being reset
@@ -438,7 +435,7 @@ void rtcmix_flush(t_rtcmix_tilde *x)
 }
 
 // bang triggers the current working script
-void rtcmix_tilde_bang(t_rtcmix_tilde *x)
+static void rtcmix_tilde_bang(t_rtcmix_tilde *x)
 {
         DEBUG(post("rtcmix~: received bang"); );
 
@@ -446,7 +443,7 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
         if (canvas_dspstate == 0) return;
         RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
-void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
+static void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
 {
         DEBUG(post("received float %f",scriptnum); );
         if (x->flushflag == true) return; // heap and queue being reset
@@ -455,7 +452,7 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
         RTcmix_parseScore(x->rtcmix_script[(int)scriptnum], strlen(x->rtcmix_script[(int)scriptnum]));
 }
 
-void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
+static void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
 {
         //check to see which input the float came in, then set the appropriate variable value
         //TODO: bounds check?
@@ -467,69 +464,69 @@ void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
         else RTcmix_setPField(inlet+1, f);
 }
 
-void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 0",f); );
         rtcmix_float_inlet(x,0,f);
 }
 
-void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 1",f); );
         rtcmix_float_inlet(x,1,f);
 }
-void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 2",f); );
         rtcmix_float_inlet(x,2,f);
 }
-void rtcmix_inletp3(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp3(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 3",f); );
         rtcmix_float_inlet(x,3,f);
 }
-void rtcmix_inletp4(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp4(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 4",f); );
         rtcmix_float_inlet(x,4,f);
 }
-void rtcmix_inletp5(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp5(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 5",f); );
         rtcmix_float_inlet(x,5,f);
 }
-void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 6",f); );
         rtcmix_float_inlet(x,6,f);
 }
-void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 7",f); );
         rtcmix_float_inlet(x,7,f);
 }
-void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 8",f); );
         rtcmix_float_inlet(x,8,f);
 }
-void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f)
+static void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f)
 {
         DEBUG(
                 post("received %f at pinlet 9",f); );
         rtcmix_float_inlet(x,9,f);
 }
 
-void rtcmix_verbose (t_rtcmix_tilde *x, t_float f)
+static void rtcmix_verbose (t_rtcmix_tilde *x, t_float f)
 {
         switch ((short)f)
         {
@@ -546,14 +543,14 @@ void rtcmix_verbose (t_rtcmix_tilde *x, t_float f)
         post("rtcmix~: verbosity set to %i",(short)f);
 }
 
-void rtcmix_openeditor(t_rtcmix_tilde *x)
+static void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
         DEBUG( post ("clicked."); );
         x->buffer_changed = true;
         sys_vgui("exec %s %s &\n",x->editorpath, x->tempscript_path[x->current_script]);
 }
 
-void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
+static void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
 {
         char *str = s->s_name;
         if (0==strcmp(str,"tedit")) sprintf(x->editorpath, "\"%s/%s\"", x->externdir, "tedit/tedit");
@@ -562,7 +559,7 @@ void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
         post("setting the text editor to %s",str);
 }
 
-void rtcmix_setscript(t_rtcmix_tilde *x, t_float s)
+static void rtcmix_setscript(t_rtcmix_tilde *x, t_float s)
 {
         DEBUG(post("setscript: %d", (int)s); );
         if (s >= 0 && s < MAX_SCRIPTS)
@@ -572,7 +569,7 @@ void rtcmix_setscript(t_rtcmix_tilde *x, t_float s)
         }
 }
 
-void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
+static void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 {
         DEBUG( post("read %s",fullpath); );
         FILE *fp = fopen ( fullpath, "r" );
@@ -612,7 +609,7 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 
 }
 
-void rtcmix_write(t_rtcmix_tilde *x, char* filename)
+static void rtcmix_write(t_rtcmix_tilde *x, char* filename)
 {
         post("write %s", filename);
         char * sys_cmd = malloc(MAXPDSTRING);
@@ -625,7 +622,7 @@ void rtcmix_write(t_rtcmix_tilde *x, char* filename)
         free(sys_cmd);
 }
 
-void rtcmix_open(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
+static void rtcmix_open(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 {
         UNUSED(s);
         if (argc == 0)
@@ -643,7 +640,7 @@ void rtcmix_open(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
         }
 }
 
-void rtcmix_save(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
+static void rtcmix_save(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 {
         UNUSED(s);
         if (argc == 0)
@@ -661,7 +658,7 @@ void rtcmix_save(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
         }
 }
 
-void rtcmix_callback (t_rtcmix_tilde *x, t_symbol *s)
+static void rtcmix_callback (t_rtcmix_tilde *x, t_symbol *s)
 {
         switch (x->rw_flag)
         {
@@ -682,7 +679,7 @@ void rtcmix_callback (t_rtcmix_tilde *x, t_symbol *s)
         x->rw_flag = none;
 }
 
-void rtcmix_bangcallback(void *inContext)
+static void rtcmix_bangcallback(void *inContext)
 {
         t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
         // got a pending bang from MAXBANG()
@@ -690,7 +687,7 @@ void rtcmix_bangcallback(void *inContext)
         //defer_low(x, (method)rtcmix_dobangout, (Symbol *)NULL, 0, (Atom *)NULL);
 }
 
-void rtcmix_valuescallback(float *values, int numValues, void *inContext)
+static void rtcmix_valuescallback(float *values, int numValues, void *inContext)
 {
         t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
         int i;
@@ -703,7 +700,7 @@ void rtcmix_valuescallback(float *values, int numValues, void *inContext)
         }
 }
 
-void rtcmix_printcallback(const char *printBuffer, void *inContext)
+static void rtcmix_printcallback(const char *printBuffer, void *inContext)
 {
         UNUSED(inContext);
         const char *pbufptr = printBuffer;
@@ -713,24 +710,18 @@ void rtcmix_printcallback(const char *printBuffer, void *inContext)
         }
 }
 
-void null_the_pointers(t_rtcmix_tilde *x)
+static void null_the_pointers(t_rtcmix_tilde *x)
 {
         x->pfield_in = NULL;
         x->outpointer = NULL;
-        x->signalinlets = NULL;
-        x->signaloutlets = NULL;
-        x->pfieldinlets = NULL;
         x->tempfolder_path = NULL;
         x->pd_inbuf = NULL;
         x->pd_outbuf = NULL;
-        x->restore_buf_ptr = NULL;
         x->var_array = NULL;
         x->var_set = NULL;
-
         x->rtcmix_script = NULL;
         x->tempscript_path = NULL;
         x->x_canvas = NULL;
-        x->x_guiconnect = NULL;
         x->canvas_path = NULL;
         x->x_s = NULL;
         x->editorpath = NULL;

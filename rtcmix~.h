@@ -6,22 +6,6 @@
 #define SCOREEXTENSION "sco"
 #define TEMPFILENAME "untitled"
 
-// Compatibility fix for 64bit version of garray stuff
-// http://pure-data.svn.sourceforge.net/viewvc/pure-data/trunk/scripts/guiplugins/64bit-warning-plugin/README.txt?revision=17094&view=markup
-/*
- #if (defined PD_MAJOR_VERSION && defined PD_MINOR_VERSION) && (PD_MAJOR_VERSION > 0 || PD_MINOR_VERSION >= 41)
- # define arraynumber_t t_word
- # define array_getarray garray_getfloatwords
- # define array_get(pointer, index) (pointer[index].w_float)
- # define array_set(pointer, index, value) ((pointer[index].w_float)=value)
- #else
- # define arraynumber_t t_float
- # define array_getarray garray_getfloatarray
- # define array_get(pointer, index) (pointer[index])
- # define array_set(pointer, index, value) ((pointer[index])=value)
- #endif
- */
-
 #define VERSION "0.9"
 
 #define MAX_INPUTS 20    //switched to 8 for sanity sake (have to contruct manually)
@@ -60,16 +44,10 @@ typedef struct _rtcmix_tilde
 								short num_pinlets; // number of inlets for dynamic PField control
 								float *pfield_in; // values received for dynamic PFields
 								t_outlet *outpointer;
-								t_inlet **signalinlets;
-								t_outlet **signaloutlets;
-								t_inlet **pfieldinlets;
 
 								char *tempfolder_path;
 								float *pd_outbuf;
 								float *pd_inbuf;
-
-								// script buffer pointer for large binbuf restores
-								char *restore_buf_ptr;
 
 								// for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
 #define NVARS 9
@@ -92,7 +70,6 @@ typedef struct _rtcmix_tilde
 
 								// JWM : canvas objects for callback addressing (needed for openpanel and savepanel)
 								t_canvas *x_canvas;
-								t_guiconnect *x_guiconnect;
 								t_symbol *canvas_path;
 								t_symbol *x_s;
 								char *editorpath;
@@ -111,56 +88,54 @@ typedef struct _rtcmix_tilde
 
 //setup funcs; this probably won't change, unless you decide to change the number of
 //args that the user can input, in which case rtcmix_tilde_new will have to change
-void rtcmix_tilde_setup(void);
-void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv);
-void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp); //, short *count);
-t_int *rtcmix_tilde_perform(t_int *w);
-void rtcmix_tilde_free(t_rtcmix_tilde *x);
+//static void rtcmix_tilde_setup(void);
+static void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv);
+static void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp); //, short *count);
+static t_int *rtcmix_tilde_perform(t_int *w);
+static void rtcmix_tilde_free(t_rtcmix_tilde *x);
 
 // JWM: for getting bang or float at left inlet only
-void rtcmix_tilde_bang(t_rtcmix_tilde *x);
-void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum);
+static void rtcmix_tilde_bang(t_rtcmix_tilde *x);
+static void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum);
 // JWM: float inlets are rewritten (in a horrible embarassing way) below
 
 //for custom messages
-void rtcmix_version(t_rtcmix_tilde *x);
-void rtcmix_info(t_rtcmix_tilde *x);
-void rtcmix_verbose(t_rtcmix_tilde *x, t_float f);
-void rtcmix_flush(t_rtcmix_tilde *x);
-void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-void rtcmix_editor(t_rtcmix_tilde *x, t_symbol *s);
+static void rtcmix_version(t_rtcmix_tilde *x);
+static void rtcmix_info(t_rtcmix_tilde *x);
+static void rtcmix_verbose(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_flush(t_rtcmix_tilde *x);
+static void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
+static void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
+static void rtcmix_editor(t_rtcmix_tilde *x, t_symbol *s);
 
 //for the text editor
-void rtcmix_openeditor(t_rtcmix_tilde *x);
-void rtcmix_open(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-void rtcmix_save(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-void rtcmix_read(t_rtcmix_tilde *x, char* fn);
-void rtcmix_write(t_rtcmix_tilde *x, char* fn);
-void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);
-void rtcmix_bangcallback(void *inContext);
-void rtcmix_valuescallback(float *values, int numValues, void *inContext);
-void rtcmix_printcallback(const char *printBuffer, void *inContext);
-void rtcmix_setscript(t_rtcmix_tilde *x, t_float s);
+static void rtcmix_openeditor(t_rtcmix_tilde *x);
+static void rtcmix_open(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
+static void rtcmix_save(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
+static void rtcmix_read(t_rtcmix_tilde *x, char* fn);
+static void rtcmix_write(t_rtcmix_tilde *x, char* fn);
+static void rtcmix_callback(t_rtcmix_tilde *x, t_symbol *s);
+static void rtcmix_bangcallback(void *inContext);
+static void rtcmix_valuescallback(float *values, int numValues, void *inContext);
+static void rtcmix_printcallback(const char *printBuffer, void *inContext);
+static void rtcmix_setscript(t_rtcmix_tilde *x, t_float s);
 
-void rtcmix_text(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
-void rtcmix_badquotes(char *cmd, char *buf); // this is to check for 'split' quoted params, called in rtcmix_dotext
-void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s);
+//static void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s);
 
 // for receiving pfields from inlets
 // JWM: I really wish I didn't have to do it this way, but I must have a new function for
 // each inlet, so... hacking away!
 // TODO: there's probably a way to set up multiple pointers to the same function... need to explore this option...
-void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp3(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp4(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp5(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
-void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
+static void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp3(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp4(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp5(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
+static void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
 
-void null_the_pointers(t_rtcmix_tilde *x);
+static void null_the_pointers(t_rtcmix_tilde *x);
