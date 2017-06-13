@@ -7,7 +7,6 @@ lib.name = rtcmix~
 
 # input source file (class name == source file basename)
 class.sources = rtcmix~.c
-ldlibs = ../rtcmix/rtcmixlib.a -lstdc++ -ldl -lpthread
 
 # all extra files to be included in binary distribution of the library
 datafiles = rtcmix~-help.pd rtcmix~-meta.pd README.md

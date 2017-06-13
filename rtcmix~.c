@@ -72,15 +72,15 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         t_rtcmix_tilde *x = (t_rtcmix_tilde *)pd_new(rtcmix_tilde_class);
         UNUSED(s);
         null_the_pointers(x);
-        RTcmix_init();
+        x->RTcmix_init();
         short num_inoutputs = 1;
         short num_additional = 0;
         // JWM: add optional third argument to autoload scorefile
         t_symbol* optional_filename = NULL;
 
-        RTcmix_setBangCallback(rtcmix_bangcallback, x);
-        RTcmix_setValuesCallback(rtcmix_valuescallback, x);
-        RTcmix_setPrintCallback(rtcmix_printcallback, x);
+        x->RTcmix_setBangCallback(rtcmix_bangcallback, x);
+        x->RTcmix_setValuesCallback(rtcmix_valuescallback, x);
+        x->RTcmix_setPrintCallback(rtcmix_printcallback, x);
 
         int this_arg;
         int float_arg = 0;
@@ -265,8 +265,8 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         for (i = 0; i < (vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
 
         DEBUG(post("x->srate: %f, x->num_outputs: %d, vector_size %d, 1, 0", x->srate, x->num_outputs, vector_size); );
-        RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
-        RTcmix_setparams(x->srate, x->num_outputs, vector_size, 1, 0);
+        x->RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
+        x->RTcmix_setparams(x->srate, x->num_outputs, vector_size, 1, 0);
 
 }
 
@@ -280,14 +280,14 @@ t_int *rtcmix_tilde_perform(t_int *w)
         int i = x->num_outputs * vecsize;
         //while (i--) out[i] = (float *)0.;
 
-        checkForBang();
-        checkForVals();
-        checkForPrint();
+        x->checkForBang();
+        x->checkForVals();
+        x->checkForPrint();
 
         // reset queue and heap if signalled
         if (x->flushflag == true)
         {
-                RTcmix_flushScore();
+                x->RTcmix_flushScore();
                 x->flushflag = false;
         }
 
@@ -317,7 +317,7 @@ t_int *rtcmix_tilde_perform(t_int *w)
                         (x->pd_inbuf)[k++] = *in[i]++;
         }
 
-        RTcmix_runAudio (x->pd_inbuf, x->pd_outbuf, 1);
+        x->RTcmix_runAudio (x->pd_inbuf, x->pd_outbuf, 1);
 
         for (k = 0; k < vecsize; k++)
         {
@@ -352,7 +352,7 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         x->externdir = NULL;
         x->x_canvas = NULL;
 
-        RTcmix_destroy();
+        x->RTcmix_destroy();
         //binbuf_free(x->x_binbuf);
         DEBUG(post ("rtcmix~ DESTROYED!"); );
 }
@@ -437,7 +437,8 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
 
         if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
-        RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
+        if (x->buffer_changed == true) rtcmix_read(x, x->tempscript_path[x->current_script]);
+        x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
 {
@@ -445,7 +446,7 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
         if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
         if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS) return;
-        RTcmix_parseScore(x->rtcmix_script[(int)scriptnum], strlen(x->rtcmix_script[(int)scriptnum]));
+        x->RTcmix_parseScore(x->rtcmix_script[(int)scriptnum], strlen(x->rtcmix_script[(int)scriptnum]));
 }
 
 void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
@@ -457,7 +458,7 @@ void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
                 x->pfield_in[inlet] = f;
                 post("rtcmix~: setting in[%d] =  %f, but rtcmix~ doesn't use this", inlet, f);
         }
-        else RTcmix_setPField(inlet+1, f);
+        else x->RTcmix_setPField(inlet+1, f);
 }
 
 void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f)
@@ -722,4 +723,25 @@ void null_the_pointers(t_rtcmix_tilde *x)
         x->x_s = NULL;
         x->editorpath = NULL;
         x->externdir = NULL;
+        x->RTcmix_init = NULL;
+        x->RTcmix_destroy = NULL;
+        x->RTcmix_setparams = NULL;
+        x->RTcmix_setBangCallback = NULL;
+        x->RTcmix_setValuesCallback = NULL;
+        x->RTcmix_setPrintCallback = NULL;
+        x->RTcmix_BangCallback = NULL;
+        x->RTcmix_ValuesCallback = NULL;
+        x->RTcmix_PrintCallback = NULL;
+        x->RTcmix_resetAudio = NULL;
+        x->RTcmix_setAudioBufferFormat = NULL;
+        x->RTcmix_runAudio = NULL;
+        x->RTcmix_parseScore = NULL;
+        x->RTcmix_flushScore = NULL;
+        x->RTcmix_setInputBuffer = NULL;
+        x->RTcmix_getBufferFrameCount = NULL;
+        x->RTcmix_getBufferChannelCount = NULL;
+        x->RTcmix_setPField = NULL;
+        x->checkForBang = NULL;
+        x->checkForVals = NULL;
+        x->checkForPrint = NULL;
 }

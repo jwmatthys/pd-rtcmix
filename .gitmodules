@@ -1,3 +1,6 @@
 [submodule "tedit"]
 	path = tedit
 	url = https://github.com/jwmatthys/tedit
+[submodule "pd-lib-builder"]
+	path = pd-lib-builder
+	url = https://github.com/pure-data/pd-lib-builder

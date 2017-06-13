@@ -29,6 +29,40 @@ enum verbose_flags {
 
 typedef enum { false, true } bool;
 
+/*** RTCMIX FUNCTIONS ---------------------------------------------------------------------------***/
+typedef void (*RTcmixBangCallback)(void *inContext);
+typedef void (*RTcmixValuesCallback)(float *values, int numValues, void *inContext);
+typedef void (*RTcmixPrintCallback)(const char *printBuffer, void *inContext);
+typedef int (*RTcmix_initPtr)();
+typedef int (*RTcmix_destroyPtr)();
+typedef int (*RTcmix_setparamsPtr)(float sr, int nchans, int vecsize, int recording, int bus_count);
+typedef void (*RTcmix_BangCallbackPtr)(void *inContext);
+typedef void (*RTcmix_ValuesCallbackPtr)(float *values, int numValues, void *inContext);
+typedef void (*RTcmix_PrintCallbackPtr)(const char *printBuffer, void *inContext);
+typedef void (*RTcmix_setBangCallbackPtr)(RTcmixBangCallback inBangCallback, void *inContext);
+typedef void (*RTcmix_setValuesCallbackPtr)(RTcmixValuesCallback inValuesCallback, void *inContext);
+typedef void (*RTcmix_setPrintCallbackPtr)(RTcmixPrintCallback inPrintCallback, void *inContext);
+typedef int (*RTcmix_resetAudioPtr)(float sr, int nchans, int vecsize, int recording);
+typedef enum _RTcmix_AudioFormat {
+	AudioFormat_16BitInt = 1,				// 16 bit short integer samples
+	AudioFormat_24BitInt = 2,				// 24 bit (3-byte) packed integer samples
+	AudioFormat_32BitInt = 4,				// 32 bit (4-byte) integer samples
+	AudioFormat_32BitFloat_Normalized = 8,	// single-precision float samples, scaled between -1.0 and 1.0
+	AudioFormat_32BitFloat = 16				// single-precision float samples, scaled between -32767.0 and 32767.0
+} RTcmix_AudioFormat;
+typedef int (*RTcmix_setAudioBufferFormatPtr)(RTcmix_AudioFormat format, int nchans);
+// Call this to send and receive audio from RTcmix
+typedef int (*RTcmix_runAudioPtr)(void *inAudioBuffer, void *outAudioBuffer, int nframes);
+typedef int (*RTcmix_parseScorePtr)(char *theBuf, int buflen);
+typedef void (*RTcmix_flushScorePtr)();
+typedef int (*RTcmix_setInputBufferPtr)(char *bufname, float *bufstart, int nframes, int nchans, int modtime);
+typedef int (*RTcmix_getBufferFrameCountPtr)(char *bufname);
+typedef int (*RTcmix_getBufferChannelCountPtr)(char *bufname);
+typedef void (*RTcmix_setPFieldPtr)(int inlet, float pval);
+typedef void (*checkForBangPtr)();
+typedef void (*checkForValsPtr)();
+typedef void (*checkForPrintPtr)();
+
 /*** PD FUNCTIONS ---------------------------------------------------------------------------***/
 
 static t_class *rtcmix_tilde_class;
@@ -162,33 +196,3 @@ void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
 void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
 
 void null_the_pointers(t_rtcmix_tilde *x);
-
-typedef int (*RTcmix_initPtr)();
-typedef int (*RTcmix_destroyPtr)();
-typedef int (*RTcmix_setparamsPtr)(float sr, int nchans, int vecsize, int recording, int bus_count);
-typedef void (*RTcmixBangCallbackPtr)(void *inContext);
-typedef void (*RTcmixValuesCallbackPtr)(float *values, int numValues, void *inContext);
-typedef void (*RTcmixPrintCallbackPtr)(const char *printBuffer, void *inContext);
-typedef void (*RTcmix_setBangCallbackPtr)(RTcmixBangCallback inBangCallback, void *inContext);
-typedef void (*RTcmix_setValuesCallbackPtr)(RTcmixValuesCallback inValuesCallback, void *inContext);
-typedef void (*RTcmix_setPrintCallbackPtr)(RTcmixPrintCallback inPrintCallback, void *inContext);
-typedef int (*RTcmix_resetAudioPtr)(float sr, int nchans, int vecsize, int recording);
-typedef enum _RTcmix_AudioFormat {
-	AudioFormat_16BitInt = 1,				// 16 bit short integer samples
-	AudioFormat_24BitInt = 2,				// 24 bit (3-byte) packed integer samples
-	AudioFormat_32BitInt = 4,				// 32 bit (4-byte) integer samples
-	AudioFormat_32BitFloat_Normalized = 8,	// single-precision float samples, scaled between -1.0 and 1.0
-	AudioFormat_32BitFloat = 16				// single-precision float samples, scaled between -32767.0 and 32767.0
-} RTcmix_AudioFormat;
-typedef int (*RTcmix_setAudioBufferFormatPtr)(RTcmix_AudioFormat format, int nchans);
-// Call this to send and receive audio from RTcmix
-typedef int (*RTcmix_runAudioPtr)(void *inAudioBuffer, void *outAudioBuffer, int nframes);
-typedef int (*RTcmix_parseScorePtr)(char *theBuf, int buflen);
-typedef void (*RTcmix_flushScorePtr)();
-typedef int (*RTcmix_setInputBufferPtr)(char *bufname, float *bufstart, int nframes, int nchans, int modtime);
-typedef int (*RTcmix_getBufferFrameCountPtr)(char *bufname);
-typedef int (*RTcmix_getBufferChannelCountPtr)(char *bufname);
-typedef void (*RTcmix_setPFieldPtr)(int inlet, float pval);
-typedef void (*checkForBangPtr)();
-typedef void (*checkForValsPtr)();
-typedef void (*checkForPrintPtr)();
