@@ -93,9 +93,6 @@ typedef struct _rtcmix_tilde
 								RTcmix_setBangCallbackPtr RTcmix_setBangCallback;
 								RTcmix_setValuesCallbackPtr RTcmix_setValuesCallback;
 								RTcmix_setPrintCallbackPtr RTcmix_setPrintCallback;
-/*								RTcmix_BangCallbackPtr RTcmix_BangCallback;
-								RTcmix_ValuesCallbackPtr RTcmix_ValuesCallback;
-								RTcmix_PrintCallbackPtr RTcmix_PrintCallback;*/
 								RTcmix_resetAudioPtr RTcmix_resetAudio;
 								RTcmix_setAudioBufferFormatPtr RTcmix_setAudioBufferFormat;
 								RTcmix_runAudioPtr RTcmix_runAudio;

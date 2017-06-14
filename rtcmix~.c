@@ -362,6 +362,7 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
 
         x->RTcmix_destroy();
         dlclose(x->RTcmix_dylib);
+
         //binbuf_free(x->x_binbuf);
         DEBUG(post ("rtcmix~ DESTROYED!"); );
 }
