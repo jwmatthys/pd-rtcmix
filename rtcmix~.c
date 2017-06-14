@@ -11,8 +11,8 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG(x) x // debug on
-//#define DEBUG(x) // debug off
+//#define DEBUG(x) x // debug on
+#define DEBUG(x) // debug off
 
 void rtcmix_tilde_setup(void)
 {
@@ -107,9 +107,8 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         short num_additional = 0;
         // JWM: add optional third argument to autoload scorefile
         t_symbol* optional_filename = NULL;
-        int this_arg;
         int float_arg = 0;
-        for (this_arg=0; this_arg<argc; this_arg++)
+        for (short this_arg=0; this_arg<argc; this_arg++)
         {
                 switch (argv[this_arg].a_type)
                 {
@@ -150,10 +149,9 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         x->num_pinlets = num_additional;
 
         // setup up inputs and outputs, for audio inputs
-        int i;
 
         // SIGNAL INLETS
-        for (i=0; i < x->num_inputs-1; i++)
+        for (short i=0; i < x->num_inputs-1; i++)
                 inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
 
         // FLOAT INLETS (for pfields)
@@ -163,7 +161,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         // gensym "pinlet0", "pinlet1", etc.
         char* inletname = malloc(8);
         x->pfield_in = malloc(x->num_pinlets);
-        for (i=0; i< x->num_pinlets; i++)
+        for (short i=0; i< x->num_pinlets; i++)
         {
                 sprintf(inletname, "pinlet%d", i);
                 inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym(inletname));
@@ -172,7 +170,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         free(inletname);
 
         // SIGNAL OUTLETS
-        for (i = 0; i < x->num_outputs; i++)
+        for (short i = 0; i < x->num_outputs; i++)
         {
                 // outputs, right-to-left
                 outlet_new(&x->x_obj, gensym("signal"));
@@ -182,7 +180,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         x->outpointer = outlet_new(&x->x_obj, &s_bang);
 
         // initialize some variables; important to do this!
-        for (i = 0; i < (x->num_inputs + x->num_pinlets); i++)
+        for (short i = 0; i < (x->num_inputs + x->num_pinlets); i++)
         {
                 x->pfield_in[i] = 0.;
         }
@@ -190,7 +188,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         // set up for the variable-substitution scheme
         x->var_array = malloc(NVARS * sizeof(float));
         x->var_set = malloc(NVARS * sizeof(bool));
-        for(i = 0; i < NVARS; i++)
+        for(short i = 0; i < NVARS; i++)
         {
                 x->var_set[i] = false;
                 x->var_array[i] = 0.0;
@@ -210,7 +208,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         x->rtcmix_script = malloc(MAX_SCRIPTS * MAXSCRIPTSIZE);
         x->script_path = malloc(MAX_SCRIPTS * MAXPDSTRING);
 
-        for (i=0; i<MAX_SCRIPTS; i++)
+        for (short i=0; i<MAX_SCRIPTS; i++)
         {
                 x->rtcmix_script[i] = malloc(MAXSCRIPTSIZE);
                 x->script_path[i] = malloc(MAXPDSTRING);
@@ -219,11 +217,11 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         }
 
         x->flushflag = false;
-        x->verbose = debug;
+        x->verbose = normal;
         x->rw_flag = none;
 
-        post("rtcmix~ --- RTcmix music language, http://rtcmix.org ---");
-        post("rtcmix~ version%s by Joel Matthys", VERSION);
+        post("rtcmix~: RTcmix music language, http://rtcmix.org");
+        post("rtcmix~: version %s, compiled at %s on %s",VERSION,__TIME__, __DATE__);
 
         // If filename is given in score instantiation, open scorefile
         if (optional_filename)
@@ -247,12 +245,11 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         // signal vector starts at 1, not 0
         t_int dsp_add_args [x->num_inputs + x->num_outputs + 2];
         t_int vector_size = sp[0]->s_n;
-        int i;
         x->srate = sys_getsr();
 
         // construct the array of vectors and stuff
         dsp_add_args[0] = (t_int)x; //the object itself
-        for(i = 0; i < (x->num_inputs + x->num_outputs); i++)
+        for(short i = 0; i < (x->num_inputs + x->num_outputs); i++)
         { //pointers to the input and output vectors
                 dsp_add_args[i+1] = (t_int)sp[i]->s_vec;
         }
@@ -275,8 +272,8 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         x->pd_outbuf = malloc(sizeof(float) * vector_size * x->num_outputs);
 
         // zero out these buffers for UB
-        for (i = 0; i < (vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
-        for (i = 0; i < (vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
+        for (short i = 0; i < (vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
+        for (short i = 0; i < (vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
 
         DEBUG(post("x->srate: %f, x->num_outputs: %d, vector_size %d, 1, 0", x->srate, x->num_outputs, vector_size); );
         x->RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
@@ -291,7 +288,7 @@ t_int *rtcmix_tilde_perform(t_int *w)
         float *in[x->num_inputs]; //pointers to the input vectors
         float *out[x->num_outputs]; //pointers to the output vectors
 
-        int i = x->num_outputs * vecsize;
+        //int i = x->num_outputs * vecsize;
         //while (i--) out[i] = (float *)0.;
 
         x->checkForBang();
@@ -307,35 +304,32 @@ t_int *rtcmix_tilde_perform(t_int *w)
 
         //post ("samples_per_vector: %d", vecsize);
 
-        int j, k;
+        int j = 0;
 
-        for (i = 0; i < (x->num_inputs + x->num_pinlets); i++)
+        for (short i = 0; i < (x->num_inputs + x->num_pinlets); i++)
         {
                 in[i] = (float *)(w[i+2]);
         }
 
         //assign the output vectors
-        for (i = 0; i < x->num_outputs; i++)
+        for (short i = 0; i < x->num_outputs; i++)
         {
                 // this results in reversed L-R image but I'm
                 // guessing it's the same in Max
                 out[i] = (float *)( w[x->num_inputs + i + 2 ]);
         }
 
-        j = 0;
-        k = 0;
-
-        for (k = 0; k < vecsize; k++)
+        for (short k = 0; k < vecsize; k++)
         {
-                for(i = 0; i < x->num_inputs; i++)
+                for(short i = 0; i < x->num_inputs; i++)
                         (x->pd_inbuf)[k++] = *in[i]++;
         }
 
         x->RTcmix_runAudio (x->pd_inbuf, x->pd_outbuf, 1);
 
-        for (k = 0; k < vecsize; k++)
+        for (short k = 0; k < vecsize; k++)
         {
-                for(i = 0; i < x->num_outputs; i++)
+                for(short i = 0; i < x->num_outputs; i++)
                         *out[i]++ = (x->pd_outbuf)[j++];
         }
 
@@ -344,7 +338,6 @@ t_int *rtcmix_tilde_perform(t_int *w)
 
 void rtcmix_tilde_free(t_rtcmix_tilde *x)
 {
-        int i;
         free(x->tempfolder);
         free(x->pd_inbuf);
         free(x->pd_outbuf);
@@ -353,7 +346,7 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         free(x->x_s);
         free(x->editorpath);
 
-        for (i=0; i<MAX_SCRIPTS; i++)
+        for (short i=0; i<MAX_SCRIPTS; i++)
         {
                 free(x->rtcmix_script[i]);
                 free(x->script_path[i]);
@@ -368,6 +361,7 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         x->x_canvas = NULL;
 
         x->RTcmix_destroy();
+        dlclose(x->RTcmix_dylib);
         //binbuf_free(x->x_binbuf);
         DEBUG(post ("rtcmix~ DESTROYED!"); );
 }
@@ -388,12 +382,11 @@ void rtcmix_info(t_rtcmix_tilde *x)
 // the "var" message allows us to set $n variables imbedded in a scorefile with varnum value messages
 void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 {
-        short i, varnum;
         UNUSED(s);
 
-        for (i = 0; i < argc; i += 2)
+        for (short i = 0; i < argc; i += 2)
         {
-                varnum = (short)argv[i].a_w.w_float;
+                short varnum = (short)argv[i].a_w.w_float;
                 if ( (varnum < 1) || (varnum > NVARS) )
                 {
                         error("only vars $1 - $9 are allowed");
@@ -419,7 +412,6 @@ void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 // the "varlist" message allows us to set $n variables imbedded in a scorefile with a list of positional vars
 void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 {
-        short i;
         UNUSED(s);
 
         if (argc > NVARS)
@@ -428,7 +420,7 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
                 argc = NVARS;
         }
 
-        for (i = 0; i < argc; i++)
+        for (short i = 0; i < argc; i++)
         {
                 x->var_set[i] = true;
                 if (argv[i].a_type == A_FLOAT)
@@ -559,7 +551,7 @@ void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
         DEBUG( post ("clicked."); );
         x->buffer_changed = true;
-        post("x->script_path[x->current_script]: %s", x->script_path[x->current_script]);
+        DEBUG( post("x->script_path[x->current_script]: %s", x->script_path[x->current_script]););
         sys_vgui("exec %s %s &\n",x->editorpath, x->script_path[x->current_script]);
 }
 
@@ -569,7 +561,7 @@ void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
         if (0==strcmp(str,"tedit")) sprintf(x->editorpath, "\"%s/%s\"", x->libfolder, "tedit");
         else if (0==strcmp(str,"rtcmix")) sprintf(x->editorpath, "python \"%s/%s\"", x->libfolder, "rtcmix_editor.py");
         else sprintf(x->editorpath, "\"%s\"", str);
-        post("setting the text editor to %s",str);
+        post("rtcmix~: setting the text editor to %s",str);
 }
 
 void rtcmix_setscript(t_rtcmix_tilde *x, t_float s)
@@ -588,10 +580,9 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
         FILE *fp = fopen ( fullpath, "r" );
         long lSize = 0;
         char buffer [MAXSCRIPTSIZE];
-        if( fp == NULL )
+        if (!fp)
         {
                 error("rtcmix~: error reading \"%s\"", fullpath);
-                if (fp) fclose(fp);
                 return;
         }
 
@@ -605,8 +596,6 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
                 if (fp) fclose(fp);
                 return;
         }
-
-        post("rtcmix~: read \"%s\"", fullpath);
 
         if( fread( buffer, lSize, 1, fp) != 1 )
         {
@@ -675,11 +664,11 @@ void rtcmix_callback (t_rtcmix_tilde *x, t_symbol *s)
         switch (x->rw_flag)
         {
         case read:
-                post("read %s", s->s_name);
+                //post("read %s", s->s_name);
                 rtcmix_read(x, s->s_name);
                 break;
         case write:
-                post("write %s", s->s_name);
+                //post("write %s", s->s_name);
                 rtcmix_write(x, s->s_name);
                 break;
         case none:
@@ -696,18 +685,16 @@ void rtcmix_bangcallback(void *inContext)
         t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
         // got a pending bang from MAXBANG()
         outlet_bang(x->outpointer);
-        //defer_low(x, (method)rtcmix_dobangout, (Symbol *)NULL, 0, (Atom *)NULL);
 }
 
 void rtcmix_valuescallback(float *values, int numValues, void *inContext)
 {
         t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
-        int i;
         // BGG -- I should probably defer this one and the error posts also.  So far not a problem...
         if (numValues == 1)
                 outlet_float(x->outpointer, (double)(values[0]));
         else {
-                for (i = 0; i < numValues; i++) SETFLOAT((x->valslist)+i, values[i]);
+                for (short i = 0; i < numValues; i++) SETFLOAT((x->valslist)+i, values[i]);
                 outlet_list(x->outpointer, 0L, numValues, x->valslist);
         }
 }
