@@ -1,8 +1,7 @@
 #include "m_pd.h"
 #include "g_canvas.h"    /* just for glist_getfont, bother */
 
-
-#define TEMPFOLDERPREFIX "/tmp/"
+#define DYLIBNAME "rtcmixdylib.so"
 #define SCOREEXTENSION "sco"
 #define TEMPFILENAME "untitled"
 
@@ -30,15 +29,18 @@ enum verbose_flags {
 typedef enum { false, true } bool;
 
 /*** RTCMIX FUNCTIONS ---------------------------------------------------------------------------***/
+typedef void (*RTcmix_dylibPtr)(void *);
 typedef void (*RTcmixBangCallback)(void *inContext);
 typedef void (*RTcmixValuesCallback)(float *values, int numValues, void *inContext);
 typedef void (*RTcmixPrintCallback)(const char *printBuffer, void *inContext);
 typedef int (*RTcmix_initPtr)();
 typedef int (*RTcmix_destroyPtr)();
 typedef int (*RTcmix_setparamsPtr)(float sr, int nchans, int vecsize, int recording, int bus_count);
+/*
 typedef void (*RTcmix_BangCallbackPtr)(void *inContext);
 typedef void (*RTcmix_ValuesCallbackPtr)(float *values, int numValues, void *inContext);
 typedef void (*RTcmix_PrintCallbackPtr)(const char *printBuffer, void *inContext);
+*/
 typedef void (*RTcmix_setBangCallbackPtr)(RTcmixBangCallback inBangCallback, void *inContext);
 typedef void (*RTcmix_setValuesCallbackPtr)(RTcmixValuesCallback inValuesCallback, void *inContext);
 typedef void (*RTcmix_setPrintCallbackPtr)(RTcmixPrintCallback inPrintCallback, void *inContext);
@@ -79,20 +81,21 @@ typedef struct _rtcmix_tilde
 								float *pfield_in; // values received for dynamic PFields
 								t_outlet *outpointer;
 
-								char *tempfolder_path;
+								char *tempfolder;
 								float *pd_outbuf;
 								float *pd_inbuf;
 
 								// RTcmix dylib access pointers
+							  RTcmix_dylibPtr RTcmix_dylib;
 								RTcmix_initPtr RTcmix_init;
 								RTcmix_destroyPtr RTcmix_destroy;
 								RTcmix_setparamsPtr RTcmix_setparams;
 								RTcmix_setBangCallbackPtr RTcmix_setBangCallback;
 								RTcmix_setValuesCallbackPtr RTcmix_setValuesCallback;
 								RTcmix_setPrintCallbackPtr RTcmix_setPrintCallback;
-								RTcmix_BangCallbackPtr RTcmix_BangCallback;
+/*								RTcmix_BangCallbackPtr RTcmix_BangCallback;
 								RTcmix_ValuesCallbackPtr RTcmix_ValuesCallback;
-								RTcmix_PrintCallbackPtr RTcmix_PrintCallback;
+								RTcmix_PrintCallbackPtr RTcmix_PrintCallback;*/
 								RTcmix_resetAudioPtr RTcmix_resetAudio;
 								RTcmix_setAudioBufferFormatPtr RTcmix_setAudioBufferFormat;
 								RTcmix_runAudioPtr RTcmix_runAudio;
@@ -119,7 +122,7 @@ typedef struct _rtcmix_tilde
 								// editor stuff
 								char **rtcmix_script;
 								t_int current_script;
-								char **tempscript_path;
+								char **script_path;
 								// since both openpanel and savepanel use the same callback method, we
 								// have to differentiate whether the callback refers to an open or a save
 								enum read_write_flags rw_flag;
@@ -130,7 +133,8 @@ typedef struct _rtcmix_tilde
 								t_symbol *canvas_path;
 								t_symbol *x_s;
 								char *editorpath;
-								char *externdir;
+								char *libfolder;
+								char *dylib;
 
 								// for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
 								bool flushflag;
@@ -196,3 +200,4 @@ void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
 void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
 
 void null_the_pointers(t_rtcmix_tilde *x);
+void dlopen_and_errorcheck (t_rtcmix_tilde *x);
