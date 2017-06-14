@@ -85,9 +85,9 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         // create unique name for dylib
         x->dylib = malloc(MAXPDSTRING);
         char template[MAXPDSTRING];
-        sprintf(template, "RTcmix_dylib_XXXXXX");
+        sprintf(template, "%s/RTcmix_dylib_XXXXXX", x->tempfolder);
         if (!mkstemp(template)) post ("failed to create dylib temp name");
-        sprintf(x->dylib,"%s/%s", x->tempfolder, template);
+        sprintf(x->dylib,"%s", template);
         DEBUG(post("rtcmix~: tempfolder: %s, dylib: %s", x->tempfolder, x->dylib); );
         // allow other users to read and write (no execute tho)
         sprintf(sys_cmd, "chmod 766 %s", x->tempfolder);
