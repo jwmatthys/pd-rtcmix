@@ -16,3 +16,4 @@
    WAVY(start=0, dur, amp * env, freqA, freqB1, 0, wavet, 0, expr, pan=.6)
    WAVY(start=0, dur, amp * env, freqA, freqB2, 0, wavet, 0, expr, pan=.4)
 
+

@@ -450,27 +450,27 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 void rtcmix_flush(t_rtcmix_tilde *x)
 {
         DEBUG( post("flushing"); );
-        if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
-        x->flushflag = true;
+        if (x->RTcmix_flushScore) x->RTcmix_flushScore();
 }
 
 // bang triggers the current working script
 void rtcmix_tilde_bang(t_rtcmix_tilde *x)
 {
         DEBUG(post("rtcmix~: received bang"); );
-        if (x->flushflag == true) return; // heap and queue being reset
+        //if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
         rtcmix_read(x, x->script_path[x->current_script]);
         char* processed_script = var_substition(x, x->rtcmix_script[x->current_script]);
         x->RTcmix_parseScore(processed_script, strlen(processed_script));
+        //post("Hey look: %s",processed_script);
         free (processed_script);
 }
 
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
 {
         DEBUG(post("received float %f",scriptnum); );
-        if (x->flushflag == true) return; // heap and queue being reset
+        //if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
         if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS) return;
         char* processed_script = var_substition(x, x->rtcmix_script[(int)scriptnum]);
@@ -875,6 +875,7 @@ char* var_substition (t_rtcmix_tilde *x, const char* script)
                 }
                 inchar++;
         }
+        script_out[outchar] = (int)13;
         //post ("script_out: %s", script_out);
         return script_out;
 }
