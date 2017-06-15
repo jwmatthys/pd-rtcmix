@@ -1,3 +1,9 @@
+include ../../makefile.conf
+
+ifdef $(PD_INCLUDES)
+    PDINCLUDEDIR=$(PD_INCLUDES)
+endif
+
 # Makefile to build class 'rtcmix' for Pure Data.
 # Needs Makefile.pdlibbuilder as helper makefile for platform-dependent build
 # settings and rules.
