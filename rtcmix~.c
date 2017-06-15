@@ -11,8 +11,8 @@
 
 #define UNUSED(x) (void)(x)
 
-//#define DEBUG(x) x // debug on
-#define DEBUG(x) // debug off
+#define DEBUG(x) x // debug on
+//#define DEBUG(x) // debug off
 
 void rtcmix_tilde_setup(void)
 {
@@ -48,11 +48,7 @@ void rtcmix_tilde_setup(void)
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_callback, gensym("callback"), A_SYMBOL, 0);
 
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_setscript, gensym("setscript"), A_FLOAT, 0);
-        //our own messages
-        //so we know what to do with floats that we receive at the inputs
-/*
-   class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_bufset, gensym("bufset"), A_SYMBOL, 0);
- */
+        class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_bufset, gensym("bufset"), A_SYMBOL, 0);
 // Hackity hack hack hack!
         class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp9, gensym("pinlet9"), A_FLOAT, 0);
         class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp8, gensym("pinlet8"), A_FLOAT, 0);
@@ -99,7 +95,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
           error ("rtcmix~: error copying dylib");
 
         x->editorpath = malloc(MAXPDSTRING);
-        sprintf(x->editorpath, "python \"%s/%s\"", x->libfolder, "rtcmix_editor.py");
+        sprintf(x->editorpath, "tclsh \"%s/%s\"", x->libfolder, "tedit");
 
         free(sys_cmd);
 
@@ -186,12 +182,13 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         }
 
         // set up for the variable-substitution scheme
-        x->var_array = malloc(NVARS * sizeof(float));
+        x->var_array = malloc(NVARS * MAXPDSTRING);
         x->var_set = malloc(NVARS * sizeof(bool));
         for(short i = 0; i < NVARS; i++)
         {
                 x->var_set[i] = false;
-                x->var_array[i] = 0.0;
+                x->var_array[i] = malloc (MAXPDSTRING);
+                sprintf(x->var_array[i],"0");
         }
         // the text editor
 
@@ -341,6 +338,8 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         free(x->tempfolder);
         free(x->pd_inbuf);
         free(x->pd_outbuf);
+        for (short i = 0; i < NVARS; i++)
+          free(x->var_array[i]);
         free(x->var_array);
         free(x->var_set);
         free(x->x_s);
@@ -394,19 +393,22 @@ void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
                         return;
                 }
                 x->var_set[varnum-1] = true;
-                if (argv[i+1].a_type == A_FLOAT)
-                        x->var_array[varnum-1] = argv[i+1].a_w.w_float;
+                if (argv[i].a_type == A_SYMBOL)
+                        sprintf(x->var_array[varnum-1], "%s", argv[i+1].a_w.w_symbol->s_name);
+                else if (argv[i].a_type == A_FLOAT)
+                        sprintf(x->var_array[i], "%g", argv[i].a_w.w_float);
+//                        x->var_array[varnum-1] = argv[i+1].a_w.w_symbol->s_name;
         }
-        DEBUG(post("vars: %f %f %f %f %f %f %f %f %f",
-                   (float)(x->var_array[0]),
-                   (float)(x->var_array[1]),
-                   (float)(x->var_array[2]),
-                   (float)(x->var_array[3]),
-                   (float)(x->var_array[4]),
-                   (float)(x->var_array[5]),
-                   (float)(x->var_array[6]),
-                   (float)(x->var_array[7]),
-                   (float)(x->var_array[8])); );
+        DEBUG(post("vars: %s %s %s %s %s %s %s %s %s",
+                   x->var_array[0],
+                   x->var_array[1],
+                   x->var_array[2],
+                   x->var_array[3],
+                   x->var_array[4],
+                   x->var_array[5],
+                   x->var_array[6],
+                   x->var_array[7],
+                   x->var_array[8]); );
 }
 
 
@@ -424,9 +426,23 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
         for (short i = 0; i < argc; i++)
         {
                 x->var_set[i] = true;
-                if (argv[i].a_type == A_FLOAT)
-                        x->var_array[i] = argv[i].a_w.w_float;
+                if (argv[i].a_type == A_SYMBOL)
+                sprintf(x->var_array[i], "%s", argv[i].a_w.w_symbol->s_name);
+                else if (argv[i].a_type == A_FLOAT)
+                sprintf(x->var_array[i], "%g", argv[i].a_w.w_float);
+
+//                        x->var_array[i] = argv[i].a_w.w_symbol->s_name;
         }
+        DEBUG(post("vars: %s %s %s %s %s %s %s %s %s",
+                   x->var_array[0],
+                   x->var_array[1],
+                   x->var_array[2],
+                   x->var_array[3],
+                   x->var_array[4],
+                   x->var_array[5],
+                   x->var_array[6],
+                   x->var_array[7],
+                   x->var_array[8]); );
 }
 
 // the "flush" message
@@ -444,7 +460,7 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
         DEBUG(post("rtcmix~: received bang"); );
         if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
-        if (x->buffer_changed == true) rtcmix_read(x, x->script_path[x->current_script]);
+        rtcmix_read(x, x->script_path[x->current_script]);
         x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 
@@ -692,6 +708,7 @@ void rtcmix_valuescallback(float *values, int numValues, void *inContext)
 {
         t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
         // BGG -- I should probably defer this one and the error posts also.  So far not a problem...
+        DEBUG(post("numValues: %d", numValues););
         if (numValues == 1)
                 outlet_float(x->outpointer, (double)(values[0]));
         else {
@@ -793,3 +810,37 @@ void dlopen_and_errorcheck (t_rtcmix_tilde *x)
         x->checkForPrint = dlsym(x->RTcmix_dylib, "checkForPrint");
         if (!x->checkForPrint) error("RTcmix could not call checkForPrint()");
 }
+
+void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
+{
+  t_garray *g;
+  arraynumber_t *vec;
+  int vecsize;
+  if (canvas_dspstate == 1)
+    {
+      DEBUG(post("rtcmix~: bufset %s",s->s_name););
+      if ((g = (t_garray *)pd_findbyclass(s,garray_class)))
+	{
+	  if (!array_getarray(g, &vecsize, &vec))
+	    {
+	      error("rtcmix~: can't read array");
+	    }
+	  int chans = sizeof(t_word)/sizeof(float);
+	  DEBUG(post("rtcmix~: word size: %d, float size: %d",sizeof(t_word), sizeof(float)););
+	  x->RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
+	}
+      else
+	{
+	  error("rtcmix~: no array \"%s\"", s->s_name);
+	}
+    }
+  else
+    error ("rtcmix~: can't add buffer with DSP off");
+}
+
+/*
+char* var_substition (const char* script)
+{
+
+}
+*/

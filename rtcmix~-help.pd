@@ -1,10 +1,10 @@
-#N canvas 515 214 677 300 10;
+#N canvas 516 240 677 300 10;
 #X obj 196 119 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
 #X msg 156 69 version;
 #X msg 255 83 verbose \$1;
 #X obj 257 51 hradio 15 1 0 3 empty empty empty 0 -8 0 10 -262144 -1
--1 2;
+-1 0;
 #X floatatom 230 21 5 0 0 0 - - -, f 5;
 #X obj 33 204 rtcmix~ 4 2 hello_kitty.txt;
 #X obj 72 254 dac~ 1 2 3 4;
@@ -21,12 +21,13 @@
 #X msg 445 137 save;
 #X msg 37 37 setscript \$1;
 #X obj 40 9 hradio 15 1 0 8 empty empty empty 0 -8 0 10 -262144 -1
--1 1;
+-1 0;
 #X obj 236 240 print right:;
 #X msg 422 194 bang;
 #X obj 425 234 rtcmix~ 2 longchain.sco;
 #X msg 293 17 bang;
 #X obj 429 265 dac~;
+#X msg 486 181 flush;
 #X connect 3 0 2 0;
 #X connect 5 0 6 0;
 #X connect 5 1 6 1;
@@ -44,3 +45,4 @@
 #X connect 21 0 22 0;
 #X connect 22 0 24 0;
 #X connect 22 1 24 1;
+#X connect 25 0 22 0;

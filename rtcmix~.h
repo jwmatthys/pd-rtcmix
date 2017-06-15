@@ -28,6 +28,20 @@ enum verbose_flags {
 
 typedef enum { false, true } bool;
 
+// Compatibility fix for 64bit version of garray stuff
+// http://pure-data.svn.sourceforge.net/viewvc/pure-data/trunk/scripts/guiplugins/64bit-warning-plugin/README.txt?revision=17094&view=markup
+#if (defined PD_MAJOR_VERSION && defined PD_MINOR_VERSION) && (PD_MAJOR_VERSION > 0 || PD_MINOR_VERSION >= 41)
+# define arraynumber_t t_word
+# define array_getarray garray_getfloatwords
+# define array_get(pointer, index) (pointer[index].w_float)
+# define array_set(pointer, index, value) ((pointer[index].w_float)=value)
+#else
+# define arraynumber_t t_float
+# define array_getarray garray_getfloatarray
+# define array_get(pointer, index) (pointer[index])
+# define array_set(pointer, index, value) ((pointer[index])=value)
+#endif
+
 /*** RTCMIX FUNCTIONS ---------------------------------------------------------------------------***/
 typedef void (*RTcmix_dylibPtr)(void *);
 typedef void (*RTcmixBangCallback)(void *inContext);
@@ -108,7 +122,7 @@ typedef struct _rtcmix_tilde
 
 								// for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
 #define NVARS 9
-								float *var_array;
+								char **var_array;
 								bool *var_set;
 
 								// stuff for check_vals
@@ -177,8 +191,7 @@ void rtcmix_bangcallback(void *inContext);
 void rtcmix_valuescallback(float *values, int numValues, void *inContext);
 void rtcmix_printcallback(const char *printBuffer, void *inContext);
 void rtcmix_setscript(t_rtcmix_tilde *x, t_float s);
-
-//void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s);
+void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s);
 
 // for receiving pfields from inlets
 // JWM: I really wish I didn't have to do it this way, but I must have a new function for
@@ -198,3 +211,4 @@ void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
 
 void null_the_pointers(t_rtcmix_tilde *x);
 void dlopen_and_errorcheck (t_rtcmix_tilde *x);
+char* var_substition (const char* script);

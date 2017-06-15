@@ -1,0 +1,4 @@
+for (i = 0; i < 100; i = i+1) {
+		bangtime = irand(0.0, 7.0)
+		MAXBANG(bangtime)
+	}
