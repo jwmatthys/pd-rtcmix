@@ -1,0 +1,27 @@
+#N canvas 538 272 663 300 10;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X array array1 4e+06 float 2;
+#X coords 0 1 4e+06 -1 200 140 1;
+#X restore 433 29 graph;
+#X msg 369 163 bang;
+#X obj 369 185 openpanel;
+#X obj 369 232 soundfiler;
+#X msg 368 209 read -resize \$1 array1;
+#X msg 280 55 editor atom;
+#X obj 75 194 dac~;
+#X obj 181 167 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X msg 214 110 bufset array1;
+#X msg 222 162 flush;
+#X msg 124 82 var 1 50;
+#X obj 37 37 rtcmix~ 2 2 test.sco;
+#X connect 1 0 2 0;
+#X connect 2 0 4 0;
+#X connect 4 0 3 0;
+#X connect 5 0 11 0;
+#X connect 7 0 11 0;
+#X connect 8 0 11 0;
+#X connect 9 0 11 0;
+#X connect 10 0 11 0;
+#X connect 11 0 6 0;
+#X connect 11 1 6 1;

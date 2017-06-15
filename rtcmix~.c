@@ -92,7 +92,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 
         sprintf(sys_cmd, "cp %s/%s %s", x->libfolder, DYLIBNAME, x->dylib);
         if (system(sys_cmd))
-          error ("rtcmix~: error copying dylib");
+                error ("rtcmix~: error copying dylib");
 
         x->editorpath = malloc(MAXPDSTRING);
         sprintf(x->editorpath, "tclsh \"%s/%s\"", x->libfolder, "tedit");
@@ -103,26 +103,26 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         short num_additional = 0;
         // JWM: add optional third argument to autoload scorefile
         t_symbol* optional_filename = NULL;
-        int float_arg = 0;
+        unsigned int float_arg = 0;
         for (short this_arg=0; this_arg<argc; this_arg++)
         {
                 switch (argv[this_arg].a_type)
                 {
                 case A_SYMBOL:
                         optional_filename = argv[this_arg].a_w.w_symbol;
-                        //post("rtcmix~: instantiating with scorefile %s",optional_filename->s_name);
+                        DEBUG( post("rtcmix~: instantiating with scorefile %s",optional_filename->s_name); );
                         break;
                 case A_FLOAT:
                         if (float_arg == 0)
                         {
                                 num_inoutputs = atom_getint(argv+this_arg);
-                                DEBUG(post("rtcmix~: creating with %d signal inlets and outlets",num_inoutputs); );
+                                DEBUG(post("rtcmix~: creating with %d signal inlets and outlets", num_inoutputs); );
                                 float_arg++;
                         }
                         else if (float_arg == 1)
                         {
                                 num_additional = atom_getint(argv+this_arg);
-                                DEBUG(post("rtcmix~: creating with %d pfield inlets",num_additional); );
+                                DEBUG(post("rtcmix~: creating with %d pfield inlets", num_additional); );
                         }
                 default:
                 {}
@@ -160,6 +160,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         for (short i=0; i< x->num_pinlets; i++)
         {
                 sprintf(inletname, "pinlet%d", i);
+                post(inletname, "pinlet%d", i);
                 inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym(inletname));
                 x->pfield_in[i] = 0.0;
         }
@@ -339,10 +340,10 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         free(x->pd_inbuf);
         free(x->pd_outbuf);
         for (short i = 0; i < NVARS; i++)
-          free(x->var_array[i]);
+                free(x->var_array[i]);
         free(x->var_array);
         free(x->var_set);
-        free(x->x_s);
+        //free(x->x_s);
         free(x->editorpath);
 
         for (short i=0; i<MAX_SCRIPTS; i++)
@@ -354,15 +355,15 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         free (x->script_path);
         outlet_free(x->outpointer);
 
-        x->canvas_path = NULL;
-        x->tempfolder = NULL;
-        x->dylib = NULL;
-        x->x_canvas = NULL;
+        //x->canvas_path = NULL;
+        //x->x_canvas = NULL;
 
-        x->RTcmix_destroy();
-        dlclose(x->RTcmix_dylib);
-
-        //binbuf_free(x->x_binbuf);
+        if (x->RTcmix_dylib)
+        {
+                x->RTcmix_destroy();
+                dlclose(x->RTcmix_dylib);
+                x->dylib = NULL;
+        }
         DEBUG(post ("rtcmix~ DESTROYED!"); );
 }
 
@@ -396,7 +397,7 @@ void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
                 if (argv[i].a_type == A_SYMBOL)
                         sprintf(x->var_array[varnum-1], "%s", argv[i+1].a_w.w_symbol->s_name);
                 else if (argv[i].a_type == A_FLOAT)
-                        sprintf(x->var_array[i], "%g", argv[i].a_w.w_float);
+                        sprintf(x->var_array[varnum-1], "%g", argv[i+1].a_w.w_float);
 //                        x->var_array[varnum-1] = argv[i+1].a_w.w_symbol->s_name;
         }
         DEBUG(post("vars: %s %s %s %s %s %s %s %s %s",
@@ -427,9 +428,9 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
         {
                 x->var_set[i] = true;
                 if (argv[i].a_type == A_SYMBOL)
-                sprintf(x->var_array[i], "%s", argv[i].a_w.w_symbol->s_name);
+                        sprintf(x->var_array[i], "%s", argv[i].a_w.w_symbol->s_name);
                 else if (argv[i].a_type == A_FLOAT)
-                sprintf(x->var_array[i], "%g", argv[i].a_w.w_float);
+                        sprintf(x->var_array[i], "%g", argv[i].a_w.w_float);
 
 //                        x->var_array[i] = argv[i].a_w.w_symbol->s_name;
         }
@@ -461,7 +462,9 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
         if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
         rtcmix_read(x, x->script_path[x->current_script]);
-        x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
+        char* processed_script = var_substition(x, x->rtcmix_script[x->current_script]);
+        x->RTcmix_parseScore(processed_script, strlen(processed_script));
+        free (processed_script);
 }
 
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
@@ -470,19 +473,21 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
         if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
         if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS) return;
-        x->RTcmix_parseScore(x->rtcmix_script[(int)scriptnum], strlen(x->rtcmix_script[(int)scriptnum]));
+        char* processed_script = var_substition(x, x->rtcmix_script[(int)scriptnum]);
+        x->RTcmix_parseScore(processed_script, strlen(processed_script));
 }
 
 void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
 {
         //check to see which input the float came in, then set the appropriate variable value
         //TODO: bounds check?
+        if (canvas_dspstate == 0) return;
         if (inlet >= x->num_pinlets)
         {
                 x->pfield_in[inlet] = f;
                 post("rtcmix~: setting in[%d] =  %f, but rtcmix~ doesn't use this", inlet, f);
         }
-        //else x->RTcmix_setPField(inlet+1, f);
+        else x->RTcmix_setPField(inlet, f);
 }
 
 void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f)
@@ -568,7 +573,7 @@ void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
         DEBUG( post ("clicked."); );
         x->buffer_changed = true;
-        DEBUG( post("x->script_path[x->current_script]: %s", x->script_path[x->current_script]););
+        DEBUG( post("x->script_path[x->current_script]: %s", x->script_path[x->current_script]); );
         sys_vgui("exec %s %s &\n",x->editorpath, x->script_path[x->current_script]);
 }
 
@@ -708,7 +713,7 @@ void rtcmix_valuescallback(float *values, int numValues, void *inContext)
 {
         t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
         // BGG -- I should probably defer this one and the error posts also.  So far not a problem...
-        DEBUG(post("numValues: %d", numValues););
+        DEBUG(post("numValues: %d", numValues); );
         if (numValues == 1)
                 outlet_float(x->outpointer, (double)(values[0]));
         else {
@@ -813,34 +818,63 @@ void dlopen_and_errorcheck (t_rtcmix_tilde *x)
 
 void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
 {
-  t_garray *g;
-  arraynumber_t *vec;
-  int vecsize;
-  if (canvas_dspstate == 1)
-    {
-      DEBUG(post("rtcmix~: bufset %s",s->s_name););
-      if ((g = (t_garray *)pd_findbyclass(s,garray_class)))
-	{
-	  if (!array_getarray(g, &vecsize, &vec))
-	    {
-	      error("rtcmix~: can't read array");
-	    }
-	  int chans = sizeof(t_word)/sizeof(float);
-	  DEBUG(post("rtcmix~: word size: %d, float size: %d",sizeof(t_word), sizeof(float)););
-	  x->RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
-	}
-      else
-	{
-	  error("rtcmix~: no array \"%s\"", s->s_name);
-	}
-    }
-  else
-    error ("rtcmix~: can't add buffer with DSP off");
+        arraynumber_t *vec;
+        int vecsize;
+        if (canvas_dspstate == 1)
+        {
+                t_garray *g;
+                DEBUG(post("rtcmix~: bufset %s",s->s_name); );
+                if ((g = (t_garray *)pd_findbyclass(s,garray_class)))
+                {
+                        if (!array_getarray(g, &vecsize, &vec))
+                        {
+                                error("rtcmix~: can't read array");
+                        }
+                        int chans = sizeof(t_word)/sizeof(float);
+                        DEBUG(post("rtcmix~: word size: %d, float size: %d",sizeof(t_word), sizeof(float)); );
+                        x->RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
+                }
+                else
+                {
+                        error("rtcmix~: no array \"%s\"", s->s_name);
+                }
+        }
+        else
+                error ("rtcmix~: can't add buffer with DSP off");
 }
 
-/*
-char* var_substition (const char* script)
+char* var_substition (t_rtcmix_tilde *x, const char* script)
 {
-
+        char* script_out = malloc(MAXSCRIPTSIZE);
+        unsigned int scriptsize = strlen(script);
+        //post ("script length: %d", scriptsize);
+        unsigned int inchar = 0;
+        unsigned int outchar = 0;
+        while (inchar < scriptsize)
+        {
+                char testchar = script[inchar];
+                if ((int)testchar != 36) // dollar sign
+                        script_out[outchar++] = testchar;
+                else // Dollar sign found
+                {
+                        int varnum = (int)script[inchar+1] - 49;
+                        //post ("varnum: int: %d", varnum);
+                        if (varnum < 0 || varnum > 8)
+                        {
+                                error("rtcmix~: $ variable in script must be followed by a number 1-9");
+                        }
+                        else
+                        {
+                                int num_insert_chars = strlen(x->var_array[varnum]);
+                                for (int i = 0; i < num_insert_chars; i++)
+                                {
+                                        script_out[outchar++] = (char)x->var_array[varnum][i];
+                                }
+                                inchar++; // skip number argument
+                        }
+                }
+                inchar++;
+        }
+        //post ("script_out: %s", script_out);
+        return script_out;
 }
-*/

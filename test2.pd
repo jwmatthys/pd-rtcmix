@@ -1,4 +1,10 @@
-for (i = 0; i < 100; i = i+1) {
-		bangtime = irand(0.0, 7.0)
-		MAXBANG(bangtime)
-	}
+#N canvas 679 263 450 300 10;
+#X obj 227 184 rtcmix~;
+#X msg 207 142 varlist 2 4 foo bar 87.5;
+#X obj 166 36 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 121 218 rtcmix~ hello_kitty.txt;
+#X connect 1 0 0 0;
+#X connect 1 0 3 0;
+#X connect 2 0 0 0;
+#X connect 2 0 3 0;

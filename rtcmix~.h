@@ -51,20 +51,20 @@ typedef int (*RTcmix_initPtr)();
 typedef int (*RTcmix_destroyPtr)();
 typedef int (*RTcmix_setparamsPtr)(float sr, int nchans, int vecsize, int recording, int bus_count);
 /*
-typedef void (*RTcmix_BangCallbackPtr)(void *inContext);
-typedef void (*RTcmix_ValuesCallbackPtr)(float *values, int numValues, void *inContext);
-typedef void (*RTcmix_PrintCallbackPtr)(const char *printBuffer, void *inContext);
-*/
+   typedef void (*RTcmix_BangCallbackPtr)(void *inContext);
+   typedef void (*RTcmix_ValuesCallbackPtr)(float *values, int numValues, void *inContext);
+   typedef void (*RTcmix_PrintCallbackPtr)(const char *printBuffer, void *inContext);
+ */
 typedef void (*RTcmix_setBangCallbackPtr)(RTcmixBangCallback inBangCallback, void *inContext);
 typedef void (*RTcmix_setValuesCallbackPtr)(RTcmixValuesCallback inValuesCallback, void *inContext);
 typedef void (*RTcmix_setPrintCallbackPtr)(RTcmixPrintCallback inPrintCallback, void *inContext);
 typedef int (*RTcmix_resetAudioPtr)(float sr, int nchans, int vecsize, int recording);
 typedef enum _RTcmix_AudioFormat {
-	AudioFormat_16BitInt = 1,				// 16 bit short integer samples
-	AudioFormat_24BitInt = 2,				// 24 bit (3-byte) packed integer samples
-	AudioFormat_32BitInt = 4,				// 32 bit (4-byte) integer samples
-	AudioFormat_32BitFloat_Normalized = 8,	// single-precision float samples, scaled between -1.0 and 1.0
-	AudioFormat_32BitFloat = 16				// single-precision float samples, scaled between -32767.0 and 32767.0
+								AudioFormat_16BitInt = 1, // 16 bit short integer samples
+								AudioFormat_24BitInt = 2, // 24 bit (3-byte) packed integer samples
+								AudioFormat_32BitInt = 4, // 32 bit (4-byte) integer samples
+								AudioFormat_32BitFloat_Normalized = 8, // single-precision float samples, scaled between -1.0 and 1.0
+								AudioFormat_32BitFloat = 16 // single-precision float samples, scaled between -32767.0 and 32767.0
 } RTcmix_AudioFormat;
 typedef int (*RTcmix_setAudioBufferFormatPtr)(RTcmix_AudioFormat format, int nchans);
 // Call this to send and receive audio from RTcmix
@@ -100,7 +100,7 @@ typedef struct _rtcmix_tilde
 								float *pd_inbuf;
 
 								// RTcmix dylib access pointers
-							  RTcmix_dylibPtr RTcmix_dylib;
+								RTcmix_dylibPtr RTcmix_dylib;
 								RTcmix_initPtr RTcmix_init;
 								RTcmix_destroyPtr RTcmix_destroy;
 								RTcmix_setparamsPtr RTcmix_setparams;
@@ -211,4 +211,4 @@ void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
 
 void null_the_pointers(t_rtcmix_tilde *x);
 void dlopen_and_errorcheck (t_rtcmix_tilde *x);
-char* var_substition (const char* script);
+char* var_substition (t_rtcmix_tilde *x, const char* script);
