@@ -123,7 +123,6 @@ typedef struct _rtcmix_tilde
 								// for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
 #define NVARS 9
 								char **var_array;
-								bool *var_set;
 
 								// stuff for check_vals
 #define MAXDISPARGS 1024 // from rtcmix_tilde H/maxdispargs.h
@@ -133,6 +132,7 @@ typedef struct _rtcmix_tilde
 								// editor stuff
 								char **rtcmix_script;
 								t_int current_script;
+								bool vars_present;
 								char **script_path;
 								// since both openpanel and savepanel use the same callback method, we
 								// have to differentiate whether the callback refers to an open or a save
@@ -211,4 +211,5 @@ void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
 
 void null_the_pointers(t_rtcmix_tilde *x);
 void dlopen_and_errorcheck (t_rtcmix_tilde *x);
-char* var_substition (t_rtcmix_tilde *x, const char* script);
+//char* var_substition (t_rtcmix_tilde *x, const char* script);
+void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script);

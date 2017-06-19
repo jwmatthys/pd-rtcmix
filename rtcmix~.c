@@ -184,12 +184,10 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 
         // set up for the variable-substitution scheme
         x->var_array = malloc(NVARS * MAXPDSTRING);
-        x->var_set = malloc(NVARS * sizeof(bool));
         for(short i = 0; i < NVARS; i++)
         {
-                x->var_set[i] = false;
                 x->var_array[i] = malloc (MAXPDSTRING);
-                sprintf(x->var_array[i],"0");
+                sprintf(x->var_array[i], "%g", 0.);
         }
         // the text editor
 
@@ -205,6 +203,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         x->current_script = 0;
         x->rtcmix_script = malloc(MAX_SCRIPTS * MAXSCRIPTSIZE);
         x->script_path = malloc(MAX_SCRIPTS * MAXPDSTRING);
+        x->vars_present = false; // for $ variables
 
         for (short i=0; i<MAX_SCRIPTS; i++)
         {
@@ -342,7 +341,6 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         for (short i = 0; i < NVARS; i++)
                 free(x->var_array[i]);
         free(x->var_array);
-        free(x->var_set);
         //free(x->x_s);
         free(x->editorpath);
 
@@ -387,18 +385,16 @@ void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 
         for (short i = 0; i < argc; i += 2)
         {
-                short varnum = (short)argv[i].a_w.w_float;
+                unsigned int varnum = (unsigned int)argv[i].a_w.w_float;
                 if ( (varnum < 1) || (varnum > NVARS) )
                 {
                         error("only vars $1 - $9 are allowed");
                         return;
                 }
-                x->var_set[varnum-1] = true;
                 if (argv[i].a_type == A_SYMBOL)
                         sprintf(x->var_array[varnum-1], "%s", argv[i+1].a_w.w_symbol->s_name);
                 else if (argv[i].a_type == A_FLOAT)
                         sprintf(x->var_array[varnum-1], "%g", argv[i+1].a_w.w_float);
-//                        x->var_array[varnum-1] = argv[i+1].a_w.w_symbol->s_name;
         }
         DEBUG(post("vars: %s %s %s %s %s %s %s %s %s",
                    x->var_array[0],
@@ -426,13 +422,11 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 
         for (short i = 0; i < argc; i++)
         {
-                x->var_set[i] = true;
                 if (argv[i].a_type == A_SYMBOL)
                         sprintf(x->var_array[i], "%s", argv[i].a_w.w_symbol->s_name);
                 else if (argv[i].a_type == A_FLOAT)
                         sprintf(x->var_array[i], "%g", argv[i].a_w.w_float);
 
-//                        x->var_array[i] = argv[i].a_w.w_symbol->s_name;
         }
         DEBUG(post("vars: %s %s %s %s %s %s %s %s %s",
                    x->var_array[0],
@@ -461,10 +455,8 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
         //if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
         rtcmix_read(x, x->script_path[x->current_script]);
-        char* processed_script = var_substition(x, x->rtcmix_script[x->current_script]);
-        x->RTcmix_parseScore(processed_script, strlen(processed_script));
-        //post("Hey look: %s",processed_script);
-        free (processed_script);
+        if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
+        else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
@@ -473,8 +465,8 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
         //if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0) return;
         if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS) return;
-        char* processed_script = var_substition(x, x->rtcmix_script[(int)scriptnum]);
-        x->RTcmix_parseScore(processed_script, strlen(processed_script));
+        if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
+        else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 
 void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
@@ -629,6 +621,9 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 
         sprintf(x->script_path[x->current_script], "%s", fullpath);
 
+        x->vars_present = false;
+        for (int i=0; i<lSize; i++) if ((int)buffer[i]==36) x->vars_present = true;
+
         if (fp) fclose(fp);
 }
 
@@ -740,7 +735,6 @@ void null_the_pointers(t_rtcmix_tilde *x)
         x->pd_inbuf = NULL;
         x->pd_outbuf = NULL;
         x->var_array = NULL;
-        x->var_set = NULL;
         x->rtcmix_script = NULL;
         x->script_path = NULL;
         x->x_canvas = NULL;
@@ -843,11 +837,10 @@ void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
                 error ("rtcmix~: can't add buffer with DSP off");
 }
 
-char* var_substition (t_rtcmix_tilde *x, const char* script)
+void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script)
 {
         char* script_out = malloc(MAXSCRIPTSIZE);
         unsigned int scriptsize = strlen(script);
-        //post ("script length: %d", scriptsize);
         unsigned int inchar = 0;
         unsigned int outchar = 0;
         while (inchar < scriptsize)
@@ -858,7 +851,6 @@ char* var_substition (t_rtcmix_tilde *x, const char* script)
                 else // Dollar sign found
                 {
                         int varnum = (int)script[inchar+1] - 49;
-                        //post ("varnum: int: %d", varnum);
                         if (varnum < 0 || varnum > 8)
                         {
                                 error("rtcmix~: $ variable in script must be followed by a number 1-9");
@@ -868,14 +860,12 @@ char* var_substition (t_rtcmix_tilde *x, const char* script)
                                 int num_insert_chars = strlen(x->var_array[varnum]);
                                 for (int i = 0; i < num_insert_chars; i++)
                                 {
-                                        script_out[outchar++] = (char)x->var_array[varnum][i];
+                                        script_out[outchar++] = (int)x->var_array[varnum][i];
                                 }
                                 inchar++; // skip number argument
                         }
                 }
                 inchar++;
         }
-        script_out[outchar] = (int)13;
-        //post ("script_out: %s", script_out);
-        return script_out;
+        x->RTcmix_parseScore(script_out, outchar);
 }
