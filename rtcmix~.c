@@ -28,8 +28,6 @@ void rtcmix_tilde_setup(void)
 
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_version, gensym("version"), 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_info, gensym("info"), 0);
-        class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_verbose, gensym("verbose"), A_FLOAT, 0);
-
         class_addbang(rtcmix_tilde_class, rtcmix_tilde_bang); // trigger scripts
         class_addfloat(rtcmix_tilde_class, rtcmix_tilde_float);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_openeditor, gensym("click"), 0);
@@ -82,14 +80,13 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         x->dylib = malloc(MAXPDSTRING);
         char template[MAXPDSTRING];
         sprintf(template, "%s/RTcmix_dylib_XXXXXX", x->tempfolder);
-        if (!mkstemp(template)) post ("failed to create dylib temp name");
+        if (!mkstemp(template)) error ("failed to create dylib temp name");
         sprintf(x->dylib,"%s", template);
         DEBUG(post("rtcmix~: tempfolder: %s, dylib: %s", x->tempfolder, x->dylib); );
         // allow other users to read and write (no execute tho)
         sprintf(sys_cmd, "chmod 766 %s", x->tempfolder);
         if (system(sys_cmd))
                 error ("rtcmix~: error setting temp folder \"%s\" permissions.", x->tempfolder);
-
         sprintf(sys_cmd, "cp %s/%s %s", x->libfolder, DYLIBNAME, x->dylib);
         if (system(sys_cmd))
                 error ("rtcmix~: error copying dylib");
@@ -99,8 +96,8 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 
         free(sys_cmd);
 
-        short num_inoutputs = 1;
-        short num_additional = 0;
+        unsigned int num_inoutputs = 1;
+        unsigned int num_additional = 0;
         // JWM: add optional third argument to autoload scorefile
         t_symbol* optional_filename = NULL;
         unsigned int float_arg = 0;
@@ -130,15 +127,19 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         }
         //DEBUG(post("creating %d inlets and outlets and %d additional inlets",num_inoutputs,num_additional););
         if (num_inoutputs < 1) num_inoutputs = 1; // no args, use default of 1 channel in/out
-        if ((num_inoutputs + num_additional) > MAX_INPUTS)
-        {
-                num_inoutputs = 1;
-                num_additional = 0;
-                error("sorry, only %d total inlets are allowed!", MAX_INPUTS);
-        }
+
         // JWM: limiting num_additional to 10
         if (num_additional > 10)
+        {
+                error ("rtcmix~: sorry, only 10 pfield inlets are allowed");
                 num_additional = 10;
+        }
+
+        if (num_inoutputs > MAX_INPUTS)
+        {
+                num_inoutputs = MAX_INPUTS;
+                error("rtcmix~: sorry, only %d total inlets are allowed", MAX_INPUTS);
+        }
 
         x->num_inputs = num_inoutputs;
         x->num_outputs = num_inoutputs;
@@ -147,7 +148,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         // setup up inputs and outputs, for audio inputs
 
         // SIGNAL INLETS
-        for (short i=0; i < x->num_inputs-1; i++)
+        for (unsigned int i=0; i < x->num_inputs-1; i++)
                 inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
 
         // FLOAT INLETS (for pfields)
@@ -156,18 +157,18 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         // inlets to 10 (not sure why we'd need more anyway) and passing each to
         // gensym "pinlet0", "pinlet1", etc.
         char* inletname = malloc(8);
+        error ("x->num_pinlets: %d", x->num_pinlets);
         x->pfield_in = malloc(x->num_pinlets);
         for (short i=0; i< x->num_pinlets; i++)
         {
                 sprintf(inletname, "pinlet%d", i);
-                post(inletname, "pinlet%d", i);
                 inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym(inletname));
                 x->pfield_in[i] = 0.0;
         }
         free(inletname);
 
         // SIGNAL OUTLETS
-        for (short i = 0; i < x->num_outputs; i++)
+        for (unsigned int i = 0; i < x->num_outputs; i++)
         {
                 // outputs, right-to-left
                 outlet_new(&x->x_obj, gensym("signal"));
@@ -214,7 +215,6 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         }
 
         x->flushflag = false;
-        x->verbose = normal;
         x->rw_flag = none;
 
         post("rtcmix~: RTcmix music language, http://rtcmix.org");
@@ -298,8 +298,6 @@ t_int *rtcmix_tilde_perform(t_int *w)
                 x->RTcmix_flushScore();
                 x->flushflag = false;
         }
-
-        //post ("samples_per_vector: %d", vecsize);
 
         int j = 0;
 
@@ -544,23 +542,6 @@ void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f)
         rtcmix_float_inlet(x,9,f);
 }
 
-void rtcmix_verbose (t_rtcmix_tilde *x, t_float f)
-{
-        switch ((short)f)
-        {
-        case 0:
-                x->verbose = silent;
-                break;
-        case 2:
-                x->verbose = debug;
-                break;
-        case 1:
-        default:
-                x->verbose = normal;
-        }
-        post("rtcmix~: verbosity set to %i",(short)f);
-}
-
 void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
         DEBUG( post ("clicked."); );
@@ -629,13 +610,12 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 
 void rtcmix_write(t_rtcmix_tilde *x, char* filename)
 {
-        post("write %s", filename);
+        DEBUG (post("write %s", filename); );
         char * sys_cmd = malloc(MAXPDSTRING);
         sprintf(sys_cmd, "cp \"%s\" \"%s\"", x->script_path[x->current_script], filename);
         if (system(sys_cmd)) error ("rtcmix~: error saving %s",filename);
         else
-        if (x->verbose != silent)
-                post("rtcmix~: wrote script %i to %s",x->current_script,filename);
+                DEBUG(post("rtcmix~: wrote script %i to %s",x->current_script,filename); );
         sprintf(x->script_path[x->current_script], "%s", filename);
         free(sys_cmd);
 }
@@ -689,10 +669,8 @@ void rtcmix_callback (t_rtcmix_tilde *x, t_symbol *s)
                 rtcmix_write(x, s->s_name);
                 break;
         case none:
-                post("none %s (this shouldn't happen)", s->s_name);
-                break;
         default:
-                post("default %s (this shouldn't happen)", s->s_name);
+                error("callback error: %s", s->s_name);
         }
         x->rw_flag = none;
 }

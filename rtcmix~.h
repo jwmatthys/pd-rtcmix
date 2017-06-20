@@ -20,12 +20,6 @@ enum read_write_flags {
 								none
 };
 
-enum verbose_flags {
-								silent,
-								normal,
-								debug
-};
-
 typedef enum { false, true } bool;
 
 // Compatibility fix for 64bit version of garray stuff
@@ -94,6 +88,8 @@ typedef struct _rtcmix_tilde
 								short num_pinlets; // number of inlets for dynamic PField control
 								float *pfield_in; // values received for dynamic PFields
 								t_outlet *outpointer;
+								t_inlet **signal_inlets;
+								t_inlet **p_inlets;
 
 								char *tempfolder;
 								float *pd_outbuf;
@@ -151,8 +147,6 @@ typedef struct _rtcmix_tilde
 								bool flushflag;
 								t_float f;
 
-								enum verbose_flags verbose;
-
 } t_rtcmix_tilde;
 
 
@@ -174,7 +168,6 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum);
 //for custom messages
 void rtcmix_version(t_rtcmix_tilde *x);
 void rtcmix_info(t_rtcmix_tilde *x);
-void rtcmix_verbose(t_rtcmix_tilde *x, t_float f);
 void rtcmix_flush(t_rtcmix_tilde *x);
 void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
