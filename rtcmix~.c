@@ -47,17 +47,6 @@ void rtcmix_tilde_setup(void)
 
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_setscript, gensym("setscript"), A_FLOAT, 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_bufset, gensym("bufset"), A_SYMBOL, 0);
-// Hackity hack hack hack!
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp9, gensym("pinlet9"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp8, gensym("pinlet8"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp7, gensym("pinlet7"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp6, gensym("pinlet6"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp5, gensym("pinlet5"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp4, gensym("pinlet4"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp3, gensym("pinlet3"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp2, gensym("pinlet2"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp1, gensym("pinlet1"), A_FLOAT, 0);
-        class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_inletp0, gensym("pinlet0"), A_FLOAT, 0);
 }
 
 void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
@@ -129,16 +118,16 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         if (num_inoutputs < 1) num_inoutputs = 1; // no args, use default of 1 channel in/out
 
         // JWM: limiting num_additional to 10
-        if (num_additional > 10)
+        if (num_additional > MAX_PINLETS)
         {
-                error ("rtcmix~: sorry, only 10 pfield inlets are allowed");
-                num_additional = 10;
+                error ("rtcmix~: sorry, only %d pfield inlets are allowed", MAX_PINLETS);
+                num_additional = MAX_PINLETS;
         }
 
         if (num_inoutputs > MAX_INPUTS)
         {
                 num_inoutputs = MAX_INPUTS;
-                error("rtcmix~: sorry, only %d total inlets are allowed", MAX_INPUTS);
+                error("rtcmix~: sorry, only %d signal inlets are allowed", MAX_INPUTS);
         }
 
         x->num_inputs = num_inoutputs;
@@ -147,28 +136,23 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 
         // setup up inputs and outputs, for audio inputs
 
+        //x->signal_inlets = malloc (x->num_inputs);
+
         // SIGNAL INLETS
-        for (unsigned int i=0; i < x->num_inputs-1; i++)
+        for (int i=0; i < x->num_inputs-1; i++)
                 inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
 
-        // FLOAT INLETS (for pfields)
-        // JWM: This is a hack, since I couldn't find a way to identify a float
-        // passed to a single method by inlet id. So I'm limiting the number of
-        // inlets to 10 (not sure why we'd need more anyway) and passing each to
-        // gensym "pinlet0", "pinlet1", etc.
-        char* inletname = malloc(8);
-        error ("x->num_pinlets: %d", x->num_pinlets);
         x->pfield_in = malloc(x->num_pinlets);
+        //x->pfield_inlets = malloc(x->num_pinlets);
         for (short i=0; i< x->num_pinlets; i++)
         {
-                sprintf(inletname, "pinlet%d", i);
-                inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_float, gensym(inletname));
                 x->pfield_in[i] = 0.0;
+                floatinlet_new(&x->x_obj, &x->pfield_in[i]);
         }
-        free(inletname);
 
         // SIGNAL OUTLETS
-        for (unsigned int i = 0; i < x->num_outputs; i++)
+        //x->signal_outlets = malloc(x->num_outputs);
+        for (int i = 0; i < x->num_outputs; i++)
         {
                 // outputs, right-to-left
                 outlet_new(&x->x_obj, gensym("signal"));
@@ -176,12 +160,6 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
 
         // OUTLET FOR BANGS
         x->outpointer = outlet_new(&x->x_obj, &s_bang);
-
-        // initialize some variables; important to do this!
-        for (short i = 0; i < (x->num_inputs + x->num_pinlets); i++)
-        {
-                x->pfield_in[i] = 0.;
-        }
 
         // set up for the variable-substitution scheme
         x->var_array = malloc(NVARS * MAXPDSTRING);
@@ -292,6 +270,11 @@ t_int *rtcmix_tilde_perform(t_int *w)
         x->checkForVals();
         x->checkForPrint();
 
+        for (int i = 0; i < x->num_pinlets; i++)
+        {
+                x->RTcmix_setPField(i, x->pfield_in[i]);
+        }
+
         // reset queue and heap if signalled
         if (x->flushflag == true)
         {
@@ -333,10 +316,11 @@ t_int *rtcmix_tilde_perform(t_int *w)
 
 void rtcmix_tilde_free(t_rtcmix_tilde *x)
 {
+        if (x->RTcmix_flushScore) x->RTcmix_flushScore();
         free(x->tempfolder);
         free(x->pd_inbuf);
         free(x->pd_outbuf);
-        for (short i = 0; i < NVARS; i++)
+        for (int i = 0; i < NVARS; i++)
                 free(x->var_array[i]);
         free(x->var_array);
         //free(x->x_s);
@@ -350,7 +334,14 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         free (x->rtcmix_script);
         free (x->script_path);
         outlet_free(x->outpointer);
-
+        /*
+        for (int i = 0; i < x->num_inputs; i++)
+                inlet_free (x->signal_inlets[i]);
+        for (int i = 0; i < x->num_pinlets; i++)
+                inlet_free (x->pfield_inlets[i]);
+        for (int i = 0; i < x->num_outputs; i++)
+                outlet_free (x->signal_outlets[i]);
+*/
         //x->canvas_path = NULL;
         //x->x_canvas = NULL;
 
@@ -465,81 +456,6 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
         if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS) return;
         if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
         else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
-}
-
-void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f)
-{
-        //check to see which input the float came in, then set the appropriate variable value
-        //TODO: bounds check?
-        if (canvas_dspstate == 0) return;
-        if (inlet >= x->num_pinlets)
-        {
-                x->pfield_in[inlet] = f;
-                post("rtcmix~: setting in[%d] =  %f, but rtcmix~ doesn't use this", inlet, f);
-        }
-        else x->RTcmix_setPField(inlet, f);
-}
-
-void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 0",f); );
-        rtcmix_float_inlet(x,0,f);
-}
-
-void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 1",f); );
-        rtcmix_float_inlet(x,1,f);
-}
-void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 2",f); );
-        rtcmix_float_inlet(x,2,f);
-}
-void rtcmix_inletp3(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 3",f); );
-        rtcmix_float_inlet(x,3,f);
-}
-void rtcmix_inletp4(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 4",f); );
-        rtcmix_float_inlet(x,4,f);
-}
-void rtcmix_inletp5(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 5",f); );
-        rtcmix_float_inlet(x,5,f);
-}
-void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 6",f); );
-        rtcmix_float_inlet(x,6,f);
-}
-void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 7",f); );
-        rtcmix_float_inlet(x,7,f);
-}
-void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 8",f); );
-        rtcmix_float_inlet(x,8,f);
-}
-void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f)
-{
-        DEBUG(
-                post("received %f at pinlet 9",f); );
-        rtcmix_float_inlet(x,9,f);
 }
 
 void rtcmix_openeditor(t_rtcmix_tilde *x)

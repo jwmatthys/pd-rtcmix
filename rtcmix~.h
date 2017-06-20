@@ -7,9 +7,10 @@
 
 #define VERSION "0.9"
 
-#define MAX_INPUTS 20    //switched to 8 for sanity sake (have to contruct manually)
-#define MAX_OUTPUTS 20 //do we ever need more than 8? we'll cross that bridge when we come to it
+#define MAX_INPUTS 12
+#define MAX_OUTPUTS 12
 #define MAX_SCRIPTS 20 //how many scripts can we store internally
+#define MAX_PINLETS 10
 #define MAXSCRIPTSIZE 16384
 
 // JWM: since Tk's openpanel & savepanel both use callback(),
@@ -88,8 +89,9 @@ typedef struct _rtcmix_tilde
 								short num_pinlets; // number of inlets for dynamic PField control
 								float *pfield_in; // values received for dynamic PFields
 								t_outlet *outpointer;
-								t_inlet **signal_inlets;
-								t_inlet **p_inlets;
+								//t_inlet **signal_inlets;
+								//t_inlet **pfield_inlets;
+								//t_outlet **signal_outlets;
 
 								char *tempfolder;
 								float *pd_outbuf;
@@ -185,23 +187,6 @@ void rtcmix_valuescallback(float *values, int numValues, void *inContext);
 void rtcmix_printcallback(const char *printBuffer, void *inContext);
 void rtcmix_setscript(t_rtcmix_tilde *x, t_float s);
 void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s);
-
-// for receiving pfields from inlets
-// JWM: I really wish I didn't have to do it this way, but I must have a new function for
-// each inlet, so... hacking away!
-// TODO: there's probably a way to set up multiple pointers to the same function... need to explore this option...
-void rtcmix_inletp0(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp1(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp2(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp3(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp4(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp5(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp6(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp7(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp8(t_rtcmix_tilde *x, t_float f);
-void rtcmix_inletp9(t_rtcmix_tilde *x, t_float f);
-void rtcmix_float_inlet(t_rtcmix_tilde *x, unsigned short inlet, t_float f);
-
 void null_the_pointers(t_rtcmix_tilde *x);
 void dlopen_and_errorcheck (t_rtcmix_tilde *x);
 //char* var_substition (t_rtcmix_tilde *x, const char* script);
