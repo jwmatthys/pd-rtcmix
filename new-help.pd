@@ -1,0 +1,83 @@
+#N canvas 458 124 814 576 10;
+#X obj 6 70 cnv 15 800 500 empty \$0-grey_canvas empty 20 12 0 14 -187246
+-66577 0;
+#X obj 6 5 cnv 15 800 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
+0;
+#X msg 348 87 open;
+#X msg 350 136 save;
+#X msg 351 167 saveas;
+#N canvas 1 80 413 277 Creation 0;
+#X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
+-66577 0;
+#X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
+0;
+#X text 28 108 1 Number of signal inlets and outlets;
+#X text 25 188 2 Number of control inlets;
+#X text 25 208 3 Default scorefile to open;
+#X text 53 142 (The number of signal inlet and outlets is;
+#X text 53 162 always the same.);
+#X text 28 85 OPTIONAL CREATION ARGUMENTS:;
+#X restore 22 86 pd Creation Arguments;
+#N canvas 1 80 413 277 Using 0;
+#X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
+-66577 0;
+#X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
+0;
+#X text 28 108 1 Number of signal inlets and outlets;
+#X text 25 188 2 Number of control inlets;
+#X text 25 208 3 Default scorefile to open;
+#X text 53 142 (The number of signal inlet and outlets is;
+#X text 53 162 always the same.);
+#X text 28 85 OPTIONAL CREATION ARGUMENTS:;
+#X restore 23 110 pd Using Runtime Variables;
+#N canvas 1 80 413 277 Using 0;
+#X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
+-66577 0;
+#X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
+0;
+#X text 28 108 1 Number of signal inlets and outlets;
+#X text 25 188 2 Number of control inlets;
+#X text 25 208 3 Default scorefile to open;
+#X text 53 142 (The number of signal inlet and outlets is;
+#X text 53 162 always the same.);
+#X text 28 85 OPTIONAL CREATION ARGUMENTS:;
+#X restore 24 136 pd Using Control Inlets;
+#N canvas 1 80 413 277 Accessing 0;
+#X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
+-66577 0;
+#X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
+0;
+#X text 28 108 1 Number of signal inlets and outlets;
+#X text 25 188 2 Number of control inlets;
+#X text 25 208 3 Default scorefile to open;
+#X text 53 142 (The number of signal inlet and outlets is;
+#X text 53 162 always the same.);
+#X text 28 85 OPTIONAL CREATION ARGUMENTS:;
+#X restore 24 161 pd Accessing Audio Arrays;
+#X obj 85 433 cnv 15 400 100 empty empty empty 20 12 0 14 -233017 -66577
+0;
+#X obj 163 501 dac~;
+#X obj 365 485 print maxbang;
+#X obj 116 461 rtcmix~ 2 scores/demos/longchain.sco;
+#X msg 397 107 read;
+#X msg 464 108 load;
+#X text 436 108 or;
+#X text 507 109 also work the same way;
+#X msg 419 136 write;
+#X text 391 136 or;
+#X text 471 137 : Save current scorefile to disk;
+#X text 395 84 : Open scorefile (opt. with filename);
+#X text 408 168 : Open save panel to choose new filename;
+#X obj 116 257 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X text 59 233 play current scorefile;
+#X msg 351 195 reference;
+#X text 428 196 : Open rtcmix.org;
+#X connect 2 0 12 0;
+#X connect 3 0 12 0;
+#X connect 4 0 12 0;
+#X connect 12 0 10 0;
+#X connect 12 1 10 1;
+#X connect 12 2 11 0;
+#X connect 22 0 12 0;
+#X connect 24 0 12 0;

@@ -39,7 +39,7 @@ ampdiff = maxampdb - minampdb
 for (st = 0; st < totdur; st += incr) {
    index = trunc(random() * numnotes)
    pitch = pchoct(octpch(pitchtab[index]) + octpch(transposition))
-   amp = ampdb(minampdb + (ampdiff * random()))
+   amp = ampdb(minampdb + (ampdiff * random()))/4
    WAVETABLE(st, notedur, amp * env, pitch, pan=random(), wavet)
 }
 

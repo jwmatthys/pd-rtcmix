@@ -169,6 +169,7 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum);
 
 //for custom messages
 void rtcmix_version(t_rtcmix_tilde *x);
+void rtcmix_reference(t_rtcmix_tilde *x);
 void rtcmix_info(t_rtcmix_tilde *x);
 void rtcmix_flush(t_rtcmix_tilde *x);
 void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);

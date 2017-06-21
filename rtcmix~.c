@@ -28,6 +28,7 @@ void rtcmix_tilde_setup(void)
 
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_version, gensym("version"), 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_info, gensym("info"), 0);
+        class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_reference, gensym("reference"), 0);
         class_addbang(rtcmix_tilde_class, rtcmix_tilde_bang); // trigger scripts
         class_addfloat(rtcmix_tilde_class, rtcmix_tilde_float);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_openeditor, gensym("click"), 0);
@@ -762,4 +763,10 @@ void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script)
                 inchar++;
         }
         x->RTcmix_parseScore(script_out, outchar);
+}
+
+void rtcmix_reference(t_rtcmix_tilde *x)
+{
+  UNUSED(x);
+  sys_vgui("exec xdg-open http://rtcmix.org/reference &\n");
 }
