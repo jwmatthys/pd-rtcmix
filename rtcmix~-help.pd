@@ -1,24 +1,24 @@
-#N canvas 397 191 814 576 10;
+#N canvas 426 191 814 576 10;
 #X obj 6 70 cnv 15 800 500 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 800 60 empty empty rtcmix~_0.5 12 20 0 14 -123226
 -262144 0;
-#X msg 388 102 open;
+#X msg 390 102 open;
 #X msg 390 151 save;
-#X msg 391 182 saveas;
+#X msg 390 182 saveas;
 #N canvas 1 82 413 277 Creation 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
 0;
-#X text 28 108 1 Number of signal inlets and outlets;
+#X text 25 108 1 Number of signal inlets and outlets;
 #X text 25 188 2 Number of control inlets;
 #X text 25 208 3 Default scorefile to open;
-#X text 53 142 (The number of signal inlet and outlets is;
-#X text 53 162 always the same.);
-#X text 28 85 OPTIONAL CREATION ARGUMENTS:;
+#X text 50 142 (The number of signal inlet and outlets is;
+#X text 50 162 always the same.);
+#X text 25 85 OPTIONAL CREATION ARGUMENTS:;
 #X restore 62 101 pd Creation Arguments;
-#N canvas 1 86 413 277 Using 0;
+#N canvas 1 82 413 277 Using 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
@@ -27,22 +27,22 @@
 #X text 27 107 (\$1 - \$9) which are read and interpreted at the;
 #X text 27 134 moment you bang the scorefile to perform it.;
 #X text 27 161 Dollar sign variables can be replaced with numbers;
-#X text 27 188 or text. They are set with varset or varlist.;
 #X text 198 217 set \$1 to 25 \, \$2 to 99.3 \,;
 #X text 198 244 and \$3 to "line";
 #X msg 27 216 var 1 25 2 99.3 3 line;
+#X text 27 188 or text. They are set with var or varlist.;
 #X restore 63 125 pd Using Runtime Variables;
-#N canvas 743 271 413 277 Using 0;
+#N canvas 741 273 413 277 Using 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
 0;
 #X obj 204 239 dac~;
 #X obj 194 80 hsl 128 15 100 1000 0 0 empty empty empty -2 -8 0 10
--262144 -1 -1 5200 1;
+-262144 -1 -1 5000 1;
 #X floatatom 191 100 5 0 0 0 - - -, f 5;
 #X obj 195 122 hsl 128 15 1 50 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 0 1;
+-1 -1 6300 1;
 #X floatatom 192 142 5 0 0 0 - - -, f 5;
 #X text 15 85 rtcmix~ set up with;
 #X text 15 127 for live control data.;
@@ -51,7 +51,7 @@
 #X obj 148 165 bng 15 250 50 0 empty empty empty 17 7 0 10 -123226
 -1 -1;
 #X obj 361 84 vsl 15 72 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 7100 1;
+-1 -1 2500 1;
 #X obj 159 198 rtcmix~ 2 3 doc/demo/PINLET.sco;
 #X text 14 105 three additional inlets;
 #X text 32 166 Bang to play ->;
@@ -64,7 +64,7 @@
 #X connect 13 0 2 0;
 #X connect 13 1 2 1;
 #X restore 64 151 pd Using Control Inlets;
-#N canvas 1 86 413 277 Accessing 0;
+#N canvas 1 80 413 277 Accessing 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
@@ -10005,14 +10005,37 @@
 #X text 448 183 : Open save panel to choose new filename;
 #X obj 156 272 bng 30 250 50 0 empty empty empty 17 7 0 10 -123226
 -1 -1;
-#X msg 391 210 reference;
-#X msg 393 238 info;
+#X msg 390 210 reference;
+#X msg 390 238 info;
 #X text 436 239 : Print information about this object;
-#X text 61 458 click;
+#X text 60 458 click;
 #X text 60 477 object --->;
-#X text 57 495 to open;
+#X text 60 495 to open;
 #X text 60 515 editor;
-#N canvas 1 82 413 277 Changing 0;
+#X text 468 211 : Open rtcmix.org/reference;
+#X floatatom 394 270 5 0 19 0 - - -, f 5;
+#X text 440 268 : if multiple scorefiles are loaded \, play;
+#X text 454 291 the selected scorefile (0-19);
+#X text 490 316 : Set rtcmix~ to play or edit;
+#X msg 390 365 flush;
+#X text 448 365 : Clear all currently playing sound;
+#X text 99 248 Play current scorefile;
+#X msg 390 316 setscript 5;
+#X text 491 336 scorefile no. 5 (0-19);
+#X msg 390 391 reset;
+#X text 451 391 : Reset audio engine;
+#X obj 156 476 rtcmix~ 2 doc/demo/LONGCHAIN.sco;
+#X text 122 18 open-source digital signal processing;
+#X text 122 38 and sound synthesis language;
+#X obj 62 173 cnv 15 200 20 empty empty Accessing_Audio_Arrays 5 11
+0 12 -123226 -262144 0;
+#X obj 62 148 cnv 15 200 20 empty empty Using_Control_Inlets 5 11 0
+12 -123226 -262144 0;
+#X obj 62 123 cnv 15 200 20 empty empty Using_runtime_($)_variables
+5 11 0 12 -123226 -262144 0;
+#X obj 62 99 cnv 15 200 20 empty empty Creation_Arguments 5 11 0 12
+-123226 -262144 0;
+#N canvas 1 80 413 277 Changing 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
@@ -10029,30 +10052,19 @@
 #X msg 161 240 editor gedit;
 #X msg 277 240 editor vim;
 #X text 27 164 can switch to the very simple python edit written;
-#X restore 64 201 pd Changing the Scorefile Editor;
-#X text 468 211 : Open rtcmix.org/reference;
-#X floatatom 394 270 5 0 19 0 - - -, f 5;
-#X text 440 268 : if multiple scorefiles are loaded \, play;
-#X text 454 291 the selected scorefile (0-19);
-#X text 490 316 : Set rtcmix~ to play or edit;
-#X msg 395 365 flush;
-#X text 448 365 : Clear all currently playing sound;
-#X text 99 248 Play current scorefile;
-#X msg 395 316 setscript 5;
-#X text 491 336 scorefile no. 5 (0-19);
-#X msg 395 391 reset;
-#X text 451 391 : Reset audio engine;
-#X obj 156 476 rtcmix~ 2 doc/demo/LONGCHAIN.sco;
-#X connect 2 0 42 0;
-#X connect 3 0 42 0;
-#X connect 4 0 42 0;
-#X connect 21 0 42 0;
-#X connect 22 0 42 0;
-#X connect 23 0 42 0;
-#X connect 31 0 42 0;
-#X connect 35 0 42 0;
-#X connect 38 0 42 0;
-#X connect 40 0 42 0;
-#X connect 42 0 10 0;
-#X connect 42 1 10 1;
-#X connect 42 2 11 0;
+#X restore 63 199 pd Changing Text Editor;
+#X obj 62 198 cnv 15 200 20 empty empty Changing_the_Text_Editor 5
+11 0 12 -123226 -262144 0;
+#X connect 2 0 41 0;
+#X connect 3 0 41 0;
+#X connect 4 0 41 0;
+#X connect 21 0 41 0;
+#X connect 22 0 41 0;
+#X connect 23 0 41 0;
+#X connect 30 0 41 0;
+#X connect 34 0 41 0;
+#X connect 37 0 41 0;
+#X connect 39 0 41 0;
+#X connect 41 0 10 0;
+#X connect 41 1 10 1;
+#X connect 41 2 11 0;
