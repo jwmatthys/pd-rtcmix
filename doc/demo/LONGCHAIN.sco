@@ -1,8 +1,9 @@
 // This score makes a wavetable synth riff and feeds it through 3 effects
 // in series: flange -> delay -> reverb        -JGG, 6/17/00, rev. 7/12/05
+
 print_off()
-rtsetparams(44100, 2)
-load("WAVETABLE")
+rtsetparams(44100, 2) // This command gets ignored in rtcmix~
+load("WAVETABLE") // no need to load instruments in rtcmix~
 load("FLANGE")
 load("JDELAY")
 load("REVERBIT")
@@ -20,8 +21,7 @@ pitchtab = { 5.00, 5.001, 5.02, 5.03, 5.05, 5.07, 5.069, 5.10, 6.00 }
 numnotes = len(pitchtab)
 
 transposition = 2.00   // try 7.00 also, for some cool aliasing...
-
-srand()
+srand(2)
 
 
 // ---------------------------------------------------------------- synth ---
@@ -39,7 +39,7 @@ ampdiff = maxampdb - minampdb
 for (st = 0; st < totdur; st += incr) {
    index = trunc(random() * numnotes)
    pitch = pchoct(octpch(pitchtab[index]) + octpch(transposition))
-   amp = ampdb(minampdb + (ampdiff * random()))/4
+   amp = ampdb(minampdb + (ampdiff * random()))
    WAVETABLE(st, notedur, amp * env, pitch, pan=random(), wavet)
 }
 

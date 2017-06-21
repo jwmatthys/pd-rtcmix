@@ -11,8 +11,8 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG(x) x // debug on
-//#define DEBUG(x) // debug off
+//#define DEBUG(x) x // debug on
+#define DEBUG(x) // debug off
 
 void rtcmix_tilde_setup(void)
 {
@@ -25,8 +25,6 @@ void rtcmix_tilde_setup(void)
         //standard messages; don't change these
         CLASS_MAINSIGNALIN(rtcmix_tilde_class, t_rtcmix_tilde, f);
         class_addmethod(rtcmix_tilde_class, (t_method)rtcmix_tilde_dsp, gensym("dsp"), 0);
-
-        class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_version, gensym("version"), 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_info, gensym("info"), 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_reference, gensym("reference"), 0);
         class_addbang(rtcmix_tilde_class, rtcmix_tilde_bang); // trigger scripts
@@ -36,6 +34,7 @@ void rtcmix_tilde_setup(void)
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_var, gensym("var"), A_GIMME, 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_varlist, gensym("varlist"), A_GIMME, 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_flush, gensym("flush"), 0);
+        class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_reset, gensym("reset"), 0);
 
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_open, gensym("read"), A_GIMME, 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_open, gensym("load"), A_GIMME, 0);
@@ -138,7 +137,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         // setup up inputs and outputs, for audio inputs
 
         //x->signal_inlets = malloc (x->num_inputs);
-
+        x->vector_size = 0;
         // SIGNAL INLETS
         for (int i=0; i < x->num_inputs-1; i++)
                 inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
@@ -220,7 +219,7 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         // This is 2 because (for some totally crazy reason) the
         // signal vector starts at 1, not 0
         t_int dsp_add_args [x->num_inputs + x->num_outputs + 2];
-        t_int vector_size = sp[0]->s_n;
+        x->vector_size = sp[0]->s_n;
         x->srate = sys_getsr();
 
         // construct the array of vectors and stuff
@@ -230,9 +229,9 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
                 dsp_add_args[i+1] = (t_int)sp[i]->s_vec;
         }
 
-        dsp_add_args[x->num_inputs + x->num_outputs + 1] = vector_size; //pointer to the vector size
+        dsp_add_args[x->num_inputs + x->num_outputs + 1] = x->vector_size; //pointer to the vector size
 
-        DEBUG(post("vector size: %d",vector_size); );
+        DEBUG(post("vector size: %d",x->vector_size); );
 
         dsp_addv(rtcmix_tilde_perform, (x->num_inputs  + x->num_outputs + 2),(t_int*)dsp_add_args);//add them to the signal chain
 
@@ -244,16 +243,16 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         x->RTcmix_setPrintCallback(rtcmix_printcallback, x);
 
 // allocate the RTcmix i/o transfer buffers
-        x->pd_inbuf = malloc(sizeof(float) * vector_size * x->num_inputs);
-        x->pd_outbuf = malloc(sizeof(float) * vector_size * x->num_outputs);
+        x->pd_inbuf = malloc(sizeof(float) * x->vector_size * x->num_inputs);
+        x->pd_outbuf = malloc(sizeof(float) * x->vector_size * x->num_outputs);
 
         // zero out these buffers for UB
-        for (short i = 0; i < (vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
-        for (short i = 0; i < (vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
+        for (short i = 0; i < (x->vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
+        for (short i = 0; i < (x->vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
 
-        DEBUG(post("x->srate: %f, x->num_outputs: %d, vector_size %d, 1, 0", x->srate, x->num_outputs, vector_size); );
+        DEBUG(post("x->srate: %f, x->num_outputs: %d, x->vector_size %d, 1, 0", x->srate, x->num_outputs, x->vector_size); );
         x->RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
-        x->RTcmix_setparams(x->srate, x->num_outputs, vector_size, 1, 0);
+        x->RTcmix_setparams(x->srate, x->num_outputs, x->vector_size, 1, 0);
 
 }
 
@@ -336,13 +335,13 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         free (x->script_path);
         outlet_free(x->outpointer);
         /*
-        for (int i = 0; i < x->num_inputs; i++)
+           for (int i = 0; i < x->num_inputs; i++)
                 inlet_free (x->signal_inlets[i]);
-        for (int i = 0; i < x->num_pinlets; i++)
+           for (int i = 0; i < x->num_pinlets; i++)
                 inlet_free (x->pfield_inlets[i]);
-        for (int i = 0; i < x->num_outputs; i++)
+           for (int i = 0; i < x->num_outputs; i++)
                 outlet_free (x->signal_outlets[i]);
-*/
+         */
         //x->canvas_path = NULL;
         //x->x_canvas = NULL;
 
@@ -355,17 +354,16 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         DEBUG(post ("rtcmix~ DESTROYED!"); );
 }
 
-// print out the rtcmix~ version
-void rtcmix_version(t_rtcmix_tilde *x)
+void rtcmix_info(t_rtcmix_tilde *x)
 {
         post("rtcmix~, v. %s by Joel Matthys", VERSION);
         post("compiled at %s on %s",__TIME__, __DATE__);
+        post("temporary files are located at %s", x->tempfolder);
+        post("temporary rtcmixdylib.so is %s", x->dylib);
+        post("rtcmix~ external is located at %s", x->canvas_path->s_name);
+        post("current scorefile is %s", x->script_path[x->current_script]);
+        post("using editor %s", x->editorpath);
         outlet_bang(x->outpointer);
-}
-
-void rtcmix_info(t_rtcmix_tilde *x)
-{
-        rtcmix_version(x);
 }
 
 // the "var" message allows us to set $n variables imbedded in a scorefile with varnum value messages
@@ -443,20 +441,35 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
 {
         DEBUG(post("rtcmix~: received bang"); );
         //if (x->flushflag == true) return; // heap and queue being reset
-        if (canvas_dspstate == 0) return;
-        rtcmix_read(x, x->script_path[x->current_script]);
-        if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
-        else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
+        if (canvas_dspstate == 0)
+        {
+                error ("rtcmix~: can't interpret scorefile until DSP is on.");
+                return;
+        }
+        if (x->buffer_changed) rtcmix_read(x, x->script_path[x->current_script]);
+        //if (x->vars_present)
+        sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
+        //else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
 {
         DEBUG(post("received float %f",scriptnum); );
-        //if (x->flushflag == true) return; // heap and queue being reset
-        if (canvas_dspstate == 0) return;
-        if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS) return;
-        if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
-        else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
+        if (x->flushflag == true) return; // heap and queue being reset
+        if (canvas_dspstate == 0)
+        {
+                error ("rtcmix~: can't interpret scorefile until DSP is on.");
+                return;
+        }
+        if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS)
+        {
+                error ("%d is not a valid script number. (Must be 0 - %d)", (int)scriptnum, (int)(MAX_SCRIPTS-1));
+                return;
+        }
+        if (x->buffer_changed) rtcmix_read(x, x->script_path[x->current_script]);
+        //if (x->vars_present)
+        sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
+        //else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 
 void rtcmix_openeditor(t_rtcmix_tilde *x)
@@ -484,45 +497,35 @@ void rtcmix_setscript(t_rtcmix_tilde *x, t_float s)
                 DEBUG(post ("changed current script to %d", (int)s); );
                 x->current_script = (int)s;
         }
+        else error ("%d is not a valid script number. (Must be 0 - %d)", (int)s, (int)(MAX_SCRIPTS-1));
 }
 
 void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 {
         DEBUG( post("read %s",fullpath); );
-        FILE *fp = fopen ( fullpath, "r" );
-        long lSize = 0;
-        char buffer [MAXSCRIPTSIZE];
-        if (!fp)
-        {
-                error("rtcmix~: error reading \"%s\"", fullpath);
-                return;
-        }
 
-        fseek( fp, 0L, SEEK_END);
-        lSize = ftell( fp );
-        rewind( fp );
+        char *buffer = malloc(MAXSCRIPTSIZE);
+        buffer = ReadFile(fullpath);
+        int lSize = strlen(buffer);
 
         if (lSize>MAXSCRIPTSIZE)
         {
-                error("rtcmix~: error: file is longer than MAXSCRIPTSIZE");
-                if (fp) fclose(fp);
+                error("rtcmix~: read error: file is longer than MAXSCRIPTSIZE");
                 return;
         }
 
-        if( fread( buffer, lSize, 1, fp) != 1 )
+        if (lSize==0)
         {
-                error("rtcmix~: failed to read file");
+          error("rtcmix~: read error: file is length 0");
+          return;
         }
-
-        if (lSize>0)
-                sprintf(x->rtcmix_script[x->current_script], "%s",buffer);
-
+        sprintf(x->rtcmix_script[x->current_script], "%s",buffer);
         sprintf(x->script_path[x->current_script], "%s", fullpath);
 
         x->vars_present = false;
         for (int i=0; i<lSize; i++) if ((int)buffer[i]==36) x->vars_present = true;
+        x->buffer_changed = false;
 
-        if (fp) fclose(fp);
 }
 
 void rtcmix_write(t_rtcmix_tilde *x, char* filename)
@@ -532,7 +535,9 @@ void rtcmix_write(t_rtcmix_tilde *x, char* filename)
         sprintf(sys_cmd, "cp \"%s\" \"%s\"", x->script_path[x->current_script], filename);
         if (system(sys_cmd)) error ("rtcmix~: error saving %s",filename);
         else
+        {
                 DEBUG(post("rtcmix~: wrote script %i to %s",x->current_script,filename); );
+        }
         sprintf(x->script_path[x->current_script], "%s", filename);
         free(sys_cmd);
 }
@@ -721,6 +726,7 @@ void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
                         }
                         int chans = sizeof(t_word)/sizeof(float);
                         DEBUG(post("rtcmix~: word size: %d, float size: %d",sizeof(t_word), sizeof(float)); );
+                        post("rtcmix~: registered buffer %s", s->s_name);
                         x->RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
                 }
                 else
@@ -736,11 +742,18 @@ void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script)
 {
         char* script_out = malloc(MAXSCRIPTSIZE);
         unsigned int scriptsize = strlen(script);
-        unsigned int inchar = 0;
+        //post("scriptsize: %d", scriptsize);
+//        unsigned int inchar = 0;
         unsigned int outchar = 0;
-        while (inchar < scriptsize)
+//        while (inchar < scriptsize)
+        for (unsigned int inchar = 0; inchar < scriptsize; inchar++)
         {
                 char testchar = script[inchar];
+                //post("testchar at position %d: %c", inchar, testchar);
+                if ((int)testchar == 0)
+                {
+                  error ("null character found at position %d", inchar);
+                }
                 if ((int)testchar != 36) // dollar sign
                         script_out[outchar++] = testchar;
                 else // Dollar sign found
@@ -760,13 +773,59 @@ void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script)
                                 inchar++; // skip number argument
                         }
                 }
-                inchar++;
+                //inchar++;
         }
         x->RTcmix_parseScore(script_out, outchar);
 }
 
 void rtcmix_reference(t_rtcmix_tilde *x)
 {
-  UNUSED(x);
-  sys_vgui("exec xdg-open http://rtcmix.org/reference &\n");
+        UNUSED(x);
+        sys_vgui("exec xdg-open http://rtcmix.org/reference &\n");
+}
+
+void rtcmix_reset(t_rtcmix_tilde *x)
+{
+        if (canvas_dspstate == 0) return;
+        if (x->RTcmix_resetAudio) x->RTcmix_resetAudio(x->srate, x->num_outputs, x->vector_size, 1);
+}
+
+char* ReadFile(char *filename)
+{
+   char *buffer = NULL;
+   int string_size, read_size;
+   FILE *handler = fopen(filename, "r");
+
+   if (handler)
+   {
+       // Seek the last byte of the file
+       fseek(handler, 0, SEEK_END);
+       // Offset from the first to the last byte, or in other words, filesize
+       string_size = ftell(handler);
+       // go back to the start of the file
+       rewind(handler);
+
+       // Allocate a string that can hold it all
+       buffer = (char*) malloc(sizeof(char) * (string_size + 1) );
+
+       // Read it all in one operation
+       read_size = fread(buffer, sizeof(char), string_size, handler);
+
+       // fread doesn't set it so put a \0 in the last position
+       // and buffer is now officially a string
+       buffer[string_size] = '\0';
+
+       if (string_size != read_size)
+       {
+           // Something went wrong, throw away the memory and set
+           // the buffer to NULL
+           free(buffer);
+           buffer = NULL;
+       }
+
+       // Always remember to close the file.
+       fclose(handler);
+    }
+
+    return buffer;
 }

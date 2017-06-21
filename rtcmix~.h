@@ -85,6 +85,7 @@ typedef struct _rtcmix_tilde
 
 								//variables specific to this object
 								float srate;                                  //sample rate
+								t_int vector_size;
 								short num_inputs, num_outputs; //number of inputs and outputs
 								short num_pinlets; // number of inlets for dynamic PField control
 								float *pfield_in; // values received for dynamic PFields
@@ -168,10 +169,10 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum);
 // JWM: float inlets are rewritten (in a horrible embarassing way) below
 
 //for custom messages
-void rtcmix_version(t_rtcmix_tilde *x);
 void rtcmix_reference(t_rtcmix_tilde *x);
 void rtcmix_info(t_rtcmix_tilde *x);
 void rtcmix_flush(t_rtcmix_tilde *x);
+void rtcmix_reset(t_rtcmix_tilde *x);
 void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv);
 void rtcmix_editor(t_rtcmix_tilde *x, t_symbol *s);
@@ -192,3 +193,4 @@ void null_the_pointers(t_rtcmix_tilde *x);
 void dlopen_and_errorcheck (t_rtcmix_tilde *x);
 //char* var_substition (t_rtcmix_tilde *x, const char* script);
 void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script);
+char* ReadFile(char *filename);
