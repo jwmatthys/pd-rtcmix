@@ -446,10 +446,10 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
                 error ("rtcmix~: can't interpret scorefile until DSP is on.");
                 return;
         }
+        post("rtcmix~: playing \"%s\"", x->script_path[x->current_script]);
         if (x->buffer_changed) rtcmix_read(x, x->script_path[x->current_script]);
-        //if (x->vars_present)
-        sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
-        //else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
+        if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
+        else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
@@ -466,10 +466,9 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
                 error ("%d is not a valid script number. (Must be 0 - %d)", (int)scriptnum, (int)(MAX_SCRIPTS-1));
                 return;
         }
-        if (x->buffer_changed) rtcmix_read(x, x->script_path[x->current_script]);
-        //if (x->vars_present)
-        sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
-        //else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
+        post("rtcmix~: playing \"%s\"", x->script_path[(int)scriptnum]);
+        rtcmix_read(x, x->script_path[(int)scriptnum]);
+        sub_vars_and_parse(x, x->rtcmix_script[(int)scriptnum]);
 }
 
 void rtcmix_openeditor(t_rtcmix_tilde *x)
@@ -516,8 +515,8 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 
         if (lSize==0)
         {
-          error("rtcmix~: read error: file is length 0");
-          return;
+                error("rtcmix~: read error: file is length 0");
+                return;
         }
         sprintf(x->rtcmix_script[x->current_script], "%s",buffer);
         sprintf(x->script_path[x->current_script], "%s", fullpath);
@@ -726,7 +725,7 @@ void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
                         }
                         int chans = sizeof(t_word)/sizeof(float);
                         DEBUG(post("rtcmix~: word size: %d, float size: %d",sizeof(t_word), sizeof(float)); );
-                        post("rtcmix~: registered buffer %s", s->s_name);
+                        post("rtcmix~: registered buffer \"%s\"", s->s_name);
                         x->RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
                 }
                 else
@@ -752,7 +751,7 @@ void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script)
                 //post("testchar at position %d: %c", inchar, testchar);
                 if ((int)testchar == 0)
                 {
-                  error ("null character found at position %d", inchar);
+                        error ("null character found at position %d", inchar);
                 }
                 if ((int)testchar != 36) // dollar sign
                         script_out[outchar++] = testchar;
@@ -792,40 +791,40 @@ void rtcmix_reset(t_rtcmix_tilde *x)
 
 char* ReadFile(char *filename)
 {
-   char *buffer = NULL;
-   int string_size, read_size;
-   FILE *handler = fopen(filename, "r");
+        char *buffer = NULL;
+        int string_size, read_size;
+        FILE *handler = fopen(filename, "r");
 
-   if (handler)
-   {
-       // Seek the last byte of the file
-       fseek(handler, 0, SEEK_END);
-       // Offset from the first to the last byte, or in other words, filesize
-       string_size = ftell(handler);
-       // go back to the start of the file
-       rewind(handler);
+        if (handler)
+        {
+                // Seek the last byte of the file
+                fseek(handler, 0, SEEK_END);
+                // Offset from the first to the last byte, or in other words, filesize
+                string_size = ftell(handler);
+                // go back to the start of the file
+                rewind(handler);
 
-       // Allocate a string that can hold it all
-       buffer = (char*) malloc(sizeof(char) * (string_size + 1) );
+                // Allocate a string that can hold it all
+                buffer = (char*) malloc(sizeof(char) * (string_size + 1) );
 
-       // Read it all in one operation
-       read_size = fread(buffer, sizeof(char), string_size, handler);
+                // Read it all in one operation
+                read_size = fread(buffer, sizeof(char), string_size, handler);
 
-       // fread doesn't set it so put a \0 in the last position
-       // and buffer is now officially a string
-       buffer[string_size] = '\0';
+                // fread doesn't set it so put a \0 in the last position
+                // and buffer is now officially a string
+                buffer[string_size] = '\0';
 
-       if (string_size != read_size)
-       {
-           // Something went wrong, throw away the memory and set
-           // the buffer to NULL
-           free(buffer);
-           buffer = NULL;
-       }
+                if (string_size != read_size)
+                {
+                        // Something went wrong, throw away the memory and set
+                        // the buffer to NULL
+                        free(buffer);
+                        buffer = NULL;
+                }
 
-       // Always remember to close the file.
-       fclose(handler);
-    }
+                // Always remember to close the file.
+                fclose(handler);
+        }
 
-    return buffer;
+        return buffer;
 }
