@@ -1,4 +1,4 @@
-#N canvas 426 191 814 576 10;
+#N canvas 518 110 814 576 10;
 #X obj 6 70 cnv 15 800 500 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 800 60 empty empty rtcmix~_0.5 12 20 0 14 -123226
@@ -6,7 +6,7 @@
 #X msg 390 102 open;
 #X msg 390 151 save;
 #X msg 390 182 saveas;
-#N canvas 1 82 413 277 Creation 0;
+#N canvas 1 84 413 277 Creation 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
@@ -18,7 +18,7 @@
 #X text 50 162 always the same.);
 #X text 25 85 OPTIONAL CREATION ARGUMENTS:;
 #X restore 62 101 pd Creation Arguments;
-#N canvas 1 82 413 277 Using 0;
+#N canvas 1 84 413 277 Using 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
@@ -32,17 +32,17 @@
 #X msg 27 216 var 1 25 2 99.3 3 line;
 #X text 27 188 or text. They are set with var or varlist.;
 #X restore 63 125 pd Using Runtime Variables;
-#N canvas 741 273 413 277 Using 0;
+#N canvas 739 275 413 277 Using 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
 0;
 #X obj 204 239 dac~;
 #X obj 194 80 hsl 128 15 100 1000 0 0 empty empty empty -2 -8 0 10
--262144 -1 -1 5000 1;
+-262144 -1 -1 4300 1;
 #X floatatom 191 100 5 0 0 0 - - -, f 5;
-#X obj 195 122 hsl 128 15 1 50 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 6300 1;
+#X obj 195 122 hsl 128 15 15 50 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 12700 1;
 #X floatatom 192 142 5 0 0 0 - - -, f 5;
 #X text 15 85 rtcmix~ set up with;
 #X text 15 127 for live control data.;
@@ -51,7 +51,7 @@
 #X obj 148 165 bng 15 250 50 0 empty empty empty 17 7 0 10 -123226
 -1 -1;
 #X obj 361 84 vsl 15 72 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 2500 1;
+-1 -1 1800 1;
 #X obj 159 198 rtcmix~ 2 3 doc/demo/PINLET.sco;
 #X text 14 105 three additional inlets;
 #X text 32 166 Bang to play ->;
@@ -64,7 +64,7 @@
 #X connect 13 0 2 0;
 #X connect 13 1 2 1;
 #X restore 64 151 pd Using Control Inlets;
-#N canvas 1 80 413 277 Accessing 0;
+#N canvas 1 82 413 277 Accessing 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
@@ -10020,7 +10020,6 @@
 #X msg 390 365 flush;
 #X text 448 365 : Clear all currently playing sound;
 #X text 99 248 Play current scorefile;
-#X msg 390 316 setscript 5;
 #X text 491 336 scorefile no. 5 (0-19);
 #X msg 390 391 reset;
 #X text 451 391 : Reset audio engine;
@@ -10035,7 +10034,7 @@
 5 11 0 12 -123226 -262144 0;
 #X obj 62 99 cnv 15 200 20 empty empty Creation_Arguments 5 11 0 12
 -123226 -262144 0;
-#N canvas 1 80 413 277 Changing 0;
+#N canvas 1 82 413 277 Changing 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
@@ -10047,24 +10046,26 @@
 #X text 27 138 editor by Thanos Zygouris. With;
 #X text 360 139 you;
 #X text 27 190 by Joel Matthys. You may also specify any other;
-#X text 27 216 text editor you choose:;
 #X msg 46 240 editor atom;
 #X msg 161 240 editor gedit;
 #X msg 277 240 editor vim;
-#X text 27 164 can switch to the very simple python edit written;
+#X text 27 164 can switch to the very simple python editor written
+;
+#X text 27 216 text editor you have installed:;
 #X restore 63 199 pd Changing Text Editor;
 #X obj 62 198 cnv 15 200 20 empty empty Changing_the_Text_Editor 5
 11 0 12 -123226 -262144 0;
-#X connect 2 0 41 0;
-#X connect 3 0 41 0;
-#X connect 4 0 41 0;
-#X connect 21 0 41 0;
-#X connect 22 0 41 0;
-#X connect 23 0 41 0;
-#X connect 30 0 41 0;
-#X connect 34 0 41 0;
-#X connect 37 0 41 0;
-#X connect 39 0 41 0;
-#X connect 41 0 10 0;
-#X connect 41 1 10 1;
-#X connect 41 2 11 0;
+#X msg 390 316 setscript 5;
+#X connect 2 0 40 0;
+#X connect 3 0 40 0;
+#X connect 4 0 40 0;
+#X connect 21 0 40 0;
+#X connect 22 0 40 0;
+#X connect 23 0 40 0;
+#X connect 30 0 40 0;
+#X connect 34 0 40 0;
+#X connect 38 0 40 0;
+#X connect 40 0 10 0;
+#X connect 40 1 10 1;
+#X connect 40 2 11 0;
+#X connect 49 0 40 0;
