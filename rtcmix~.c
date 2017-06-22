@@ -670,7 +670,11 @@ void dlopen_and_errorcheck (t_rtcmix_tilde *x)
         if (x->RTcmix_dylib) dlclose(x->RTcmix_dylib);
 
         x->RTcmix_dylib = dlopen(x->dylib, RTLD_NOW);
-        if (!x->RTcmix_dylib) error("dlopen error loading dylib");
+        if (!x->RTcmix_dylib)
+        {
+                error("dlopen error loading dylib");
+                error("%s",dlerror());
+        }
         x->RTcmix_init = dlsym(x->RTcmix_dylib, "RTcmix_init");
         if (!x->RTcmix_init) error("RTcmix could not call RTcmix_init()");
         x->RTcmix_destroy = dlsym(x->RTcmix_dylib, "RTcmix_destroy");

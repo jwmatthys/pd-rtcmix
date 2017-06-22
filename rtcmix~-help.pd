@@ -1,4 +1,4 @@
-#N canvas 518 110 814 576 10;
+#N canvas 516 112 814 576 10;
 #X obj 6 70 cnv 15 800 500 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 800 60 empty empty rtcmix~_0.5 12 20 0 14 -123226
@@ -39,10 +39,10 @@
 0;
 #X obj 204 239 dac~;
 #X obj 194 80 hsl 128 15 100 1000 0 0 empty empty empty -2 -8 0 10
--262144 -1 -1 4300 1;
+-262144 -1 -1 0 1;
 #X floatatom 191 100 5 0 0 0 - - -, f 5;
 #X obj 195 122 hsl 128 15 15 50 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 12700 1;
+-1 -1 0 1;
 #X floatatom 192 142 5 0 0 0 - - -, f 5;
 #X text 15 85 rtcmix~ set up with;
 #X text 15 127 for live control data.;
@@ -51,7 +51,7 @@
 #X obj 148 165 bng 15 250 50 0 empty empty empty 17 7 0 10 -123226
 -1 -1;
 #X obj 361 84 vsl 15 72 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 1800 1;
+-1 -1 0 1;
 #X obj 159 198 rtcmix~ 2 3 doc/demo/PINLET.sco;
 #X text 14 105 three additional inlets;
 #X text 32 166 Bang to play ->;
@@ -10013,9 +10013,9 @@
 #X text 60 495 to open;
 #X text 60 515 editor;
 #X text 468 211 : Open rtcmix.org/reference;
-#X floatatom 394 270 5 0 19 0 - - -, f 5;
-#X text 440 268 : if multiple scorefiles are loaded \, play;
-#X text 454 291 the selected scorefile (0-19);
+#X floatatom 390 268 5 0 19 0 - - -, f 5;
+#X text 436 266 : if multiple scorefiles are loaded \, play;
+#X text 450 289 the selected scorefile (0-19);
 #X text 490 316 : Set rtcmix~ to play or edit;
 #X msg 390 365 flush;
 #X text 448 365 : Clear all currently playing sound;
