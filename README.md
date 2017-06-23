@@ -9,7 +9,9 @@ Features of the rtcmix~ external include:
 * Integrated text editor for RTcmix scorefiles
 * Internal storage of up to 20 individual RTcmix scorefiles
 * Run-time $ variable substitution
+* Access to Pd arrays within scorefiles
 * Support for multiple simultaneous instances of rtcmix~
+* Compatibility with scorefiles for Max/MSP version of rtcmix~
 
 ## About RTcmix
 RTcmix is a text-based open-source digital signal processing and sound synthesis language. RTcmix is derived from the original CMIX language developed at Princeton University by Paul Lansky, with real time support developed by Brad Garton, Doug Scott, Dave Topper, John Gibson, and many others.
