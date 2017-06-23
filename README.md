@@ -1,4 +1,4 @@
-# pd-rtcmix 0.5
+# pd-rtcmix 0.9
 ## Pure Data external for the RTcmix Audio Language
 
 RTcmix is a complete sound synthesis and signal processing language, including a robust scheduler and large set of pre-compiled instruments. The rtcmix~ object completely encapsulates RTcmix within Pd, extending the capabilities of Pd.
