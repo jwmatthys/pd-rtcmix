@@ -11,8 +11,8 @@
 
 #define UNUSED(x) (void)(x)
 
-//#define DEBUG(x) x // debug on
 #define DEBUG(x) // debug off
+//#define DEBUG(x) x // debug on
 
 void rtcmix_tilde_setup(void)
 {
@@ -64,7 +64,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         x->tempfolder = malloc(MAXPDSTRING);
         sprintf(x->tempfolder,"/tmp/RTcmix_XXXXXX");
         // create temp folder
-        x->tempfolder = mkdtemp(x->tempfolder);
+        mkdtemp(x->tempfolder);
         // create unique name for dylib
         x->dylib = malloc(MAXPDSTRING);
         char template[MAXPDSTRING];
@@ -247,13 +247,12 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         x->pd_outbuf = malloc(sizeof(float) * x->vector_size * x->num_outputs);
 
         // zero out these buffers for UB
-        for (short i = 0; i < (x->vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
-        for (short i = 0; i < (x->vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
+        //for (short i = 0; i < (x->vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
+        //for (short i = 0; i < (x->vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
 
         DEBUG(post("x->srate: %f, x->num_outputs: %d, x->vector_size %d, 1, 0", x->srate, x->num_outputs, x->vector_size); );
         x->RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
-        x->RTcmix_setparams(x->srate, x->num_outputs, x->vector_size, 1, 0);
-
+        x->RTcmix_setparams(x->srate, x->num_outputs, x->vector_size, true, 0);
 }
 
 t_int *rtcmix_tilde_perform(t_int *w)
