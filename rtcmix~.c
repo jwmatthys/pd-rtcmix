@@ -87,7 +87,11 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
                 error ("rtcmix~: error copying dylib");
 
         x->editorpath = malloc(MAXPDSTRING);
+#ifdef MACOSX
+        sprintf(x->editorpath, "python \"%s/%s\"", x->libfolder, "rtcmix_editor.py");
+#else
         sprintf(x->editorpath, "tclsh \"%s/%s\"", x->libfolder, "tedit");
+#endif
 
         free(sys_cmd);
 
