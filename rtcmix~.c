@@ -14,6 +14,12 @@
 #define DEBUG(x) // debug off
 //#define DEBUG(x) x // debug on
 
+#ifdef MACOSX
+#define OS_OPENCMD "open"
+#else
+#define OS_OPENCMD "xdg-open"
+#endif
+
 void rtcmix_tilde_setup(void)
 {
         rtcmix_tilde_class = class_new (gensym("rtcmix~"),
@@ -783,7 +789,7 @@ void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script)
 void rtcmix_reference(t_rtcmix_tilde *x)
 {
         UNUSED(x);
-        sys_vgui("exec xdg-open http://rtcmix.org/reference &\n");
+        sys_vgui("exec %s http://rtcmix.org/reference &\n", OS_OPENCMD);
 }
 
 void rtcmix_reset(t_rtcmix_tilde *x)
