@@ -269,8 +269,8 @@ t_int *rtcmix_tilde_perform(t_int *w)
 {
         t_rtcmix_tilde *x = (t_rtcmix_tilde *)(w[1]);
         t_int vecsize = w[x->num_inputs + x->num_outputs + 2]; //number of samples per vector
-        float *in[x->num_inputs]; //pointers to the input vectors
-        float *out[x->num_outputs]; //pointers to the output vectors
+        float *in[x->num_inputs * vecsize]; //pointers to the input vectors
+        float *out[x->num_outputs * vecsize]; //pointers to the output vectors
 
         //int i = x->num_outputs * vecsize;
         //while (i--) out[i] = (float *)0.;

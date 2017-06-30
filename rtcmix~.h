@@ -5,7 +5,7 @@
 #define SCOREEXTENSION "sco"
 #define TEMPFILENAME "untitled"
 
-#define VERSION "0.9"
+#define VERSION "0.91"
 
 #define MAX_INPUTS 12
 #define MAX_OUTPUTS 12
