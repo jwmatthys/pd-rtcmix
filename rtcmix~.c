@@ -70,7 +70,8 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         x->tempfolder = malloc(MAXPDSTRING);
         sprintf(x->tempfolder,"/tmp/RTcmix_XXXXXX");
         // create temp folder
-        mkdtemp(x->tempfolder);
+        void* pointless_pointer = mkdtemp(x->tempfolder);
+        UNUSED(pointless_pointer);
         // create unique name for dylib
         x->dylib = malloc(MAXPDSTRING);
         char template[MAXPDSTRING];
@@ -234,7 +235,7 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
 
         // construct the array of vectors and stuff
         dsp_add_args[0] = (t_int)x; //the object itself
-        for(short i = 0; i < (x->num_inputs + x->num_outputs); i++)
+        for(int i = 0; i < (x->num_inputs + x->num_outputs); i++)
         { //pointers to the input and output vectors
                 dsp_add_args[i+1] = (t_int)sp[i]->s_vec;
         }
@@ -257,8 +258,8 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         x->pd_outbuf = malloc(sizeof(float) * x->vector_size * x->num_outputs);
 
         // zero out these buffers for UB
-        //for (short i = 0; i < (x->vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
-        //for (short i = 0; i < (x->vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
+        //for (int i = 0; i < (x->vector_size * x->num_inputs); i++) x->pd_inbuf[i] = 0.0;
+        //for (int i = 0; i < (x->vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
 
         DEBUG(post("x->srate: %f, x->num_outputs: %d, x->vector_size %d, 1, 0", x->srate, x->num_outputs, x->vector_size); );
         x->RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_outputs);
@@ -291,32 +292,33 @@ t_int *rtcmix_tilde_perform(t_int *w)
                 x->flushflag = false;
         }
 
-        int j = 0;
 
-        for (short i = 0; i < (x->num_inputs + x->num_pinlets); i++)
+        for (int i = 0; i < x->num_inputs; i++)
         {
                 in[i] = (float *)(w[i+2]);
         }
 
         //assign the output vectors
-        for (short i = 0; i < x->num_outputs; i++)
+        for (int i = 0; i < x->num_outputs; i++)
         {
                 // this results in reversed L-R image but I'm
                 // guessing it's the same in Max
                 out[i] = (float *)( w[x->num_inputs + i + 2 ]);
         }
 
-        for (short k = 0; k < vecsize; k++)
+        int j = 0;
+        for (int k = 0; k < vecsize; k++)
         {
-                for(short i = 0; i < x->num_inputs; i++)
-                        (x->pd_inbuf)[k++] = *in[i]++;
+                for (int i = 0; i < x->num_inputs; i++)
+                        (x->pd_inbuf)[j++] = *in[i]++;
         }
 
         x->RTcmix_runAudio (x->pd_inbuf, x->pd_outbuf, 1);
 
-        for (short k = 0; k < vecsize; k++)
+        j = 0;
+        for (int k = 0; k < vecsize; k++)
         {
-                for(short i = 0; i < x->num_outputs; i++)
+                for(int i = 0; i < x->num_outputs; i++)
                         *out[i]++ = (x->pd_outbuf)[j++];
         }
 
@@ -380,7 +382,7 @@ void rtcmix_var(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 {
         UNUSED(s);
 
-        for (short i = 0; i < argc; i += 2)
+        for (int i = 0; i < argc; i += 2)
         {
                 unsigned int varnum = (unsigned int)argv[i].a_w.w_float;
                 if ( (varnum < 1) || (varnum > NVARS) )
