@@ -11,8 +11,8 @@
 
 #define UNUSED(x) (void)(x)
 
-//#define DEBUG(x) // debug off
-#define DEBUG(x) x // debug on
+#define DEBUG(x) // debug off
+//#define DEBUG(x) x // debug on
 
 #ifdef MACOSX
 #define OS_OPENCMD "open" //MACOSX
@@ -176,7 +176,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         for (int i=0; i< x->num_pinlets; i++)
         {
                 x->pfield_in[i] = 0.0;
-                floatinlet_new(&x->x_obj, 0);
+                floatinlet_new(&x->x_obj, &x->pfield_in[i]);
         }
 
         // SIGNAL OUTLETS
@@ -325,9 +325,9 @@ t_int *rtcmix_tilde_perform(t_int *w)
 
 void rtcmix_tilde_free(t_rtcmix_tilde *x)
 {
-        freebytes (x->tempfolder, sizeof(x->tempfolder));
-        freebytes (x->libfolder, sizeof(x->libfolder));
-        freebytes (x->editorpath, sizeof(x->editorpath));
+        //freebytes (x->tempfolder, sizeof(x->tempfolder));
+        //freebytes (x->libfolder, sizeof(x->libfolder));
+        //freebytes (x->editorpath, sizeof(x->editorpath));
         freebytes (x->pd_inbuf, sizeof(float) * x->vector_size * x->num_channels);
         freebytes (x->pd_outbuf, sizeof(float) * x->vector_size * x->num_channels);
         freebytes (x->var_array, NVARS * sizeof (*x->var_array));
