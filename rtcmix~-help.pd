@@ -1,7 +1,7 @@
-#N canvas 532 110 814 576 10;
+#N canvas 526 116 814 576 10;
 #X obj 6 70 cnv 15 800 500 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
-#X obj 6 5 cnv 15 800 60 empty empty rtcmix~_0.9 12 20 0 14 -123226
+#X obj 6 5 cnv 15 800 60 empty empty rtcmix~_0.92 12 20 0 14 -123226
 -262144 0;
 #X msg 390 102 open;
 #X msg 390 151 save;
@@ -18,7 +18,7 @@
 #X text 50 162 always the same.);
 #X text 25 85 OPTIONAL CREATION ARGUMENTS:;
 #X restore 62 101 pd Creation Arguments;
-#N canvas 1 84 413 277 Using 0;
+#N canvas 1 113 413 277 Using 0;
 #X obj 6 70 cnv 15 400 200 empty \$0-grey_canvas empty 20 12 0 14 -187246
 -66577 0;
 #X obj 6 5 cnv 15 400 60 empty empty rtcmix~ 12 20 0 14 -123226 -262144
