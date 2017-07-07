@@ -11,8 +11,8 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG(x) // debug off
-//#define DEBUG(x) x // debug on
+//#define DEBUG(x) // debug off
+#define DEBUG(x) x // debug on
 
 #ifdef MACOSX
 #define OS_OPENCMD "open" //MACOSX
@@ -34,7 +34,7 @@ void rtcmix_tilde_setup(void)
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_info, gensym("info"), 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_reference, gensym("reference"), 0);
         class_addbang(rtcmix_tilde_class, rtcmix_tilde_bang); // trigger scripts
-        class_addfloat(rtcmix_tilde_class, rtcmix_tilde_float);
+        class_addfloat(rtcmix_tilde_class, rtcmix_setscript);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_openeditor, gensym("click"), 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_editor, gensym("editor"), A_SYMBOL, 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_var, gensym("var"), A_GIMME, 0);
@@ -50,6 +50,7 @@ void rtcmix_tilde_setup(void)
         // openpanel and savepanel return their messages through "callback"
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_callback, gensym("callback"), A_SYMBOL, 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_setscript, gensym("setscript"), A_FLOAT, 0);
+        class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_tilde_float, gensym("play"), A_FLOAT, 0);
         class_addmethod(rtcmix_tilde_class,(t_method)rtcmix_bufset, gensym("bufset"), A_SYMBOL, 0);
 }
 
@@ -444,9 +445,10 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
         else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 
-void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
+void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float s)
 {
-        DEBUG(post("received float %f",scriptnum); );
+        int scriptnum = (int)s;
+        DEBUG(post("received float %f",s); );
         if (x->flushflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0)
         {
@@ -455,20 +457,19 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float scriptnum)
         }
         if (scriptnum < 0 || scriptnum >= MAX_SCRIPTS)
         {
-                error ("%d is not a valid script number. (Must be 0 - %d)", (int)scriptnum, (int)(MAX_SCRIPTS-1));
+                error ("%d is not a valid script number. (Must be 0 - %d)", scriptnum, (int)(MAX_SCRIPTS-1));
                 return;
         }
-        post("rtcmix~: playing \"%s\"", x->scriptpath[(int)scriptnum].a_w.w_symbol->s_name);
-        rtcmix_read(x, x->scriptpath[(int)scriptnum].a_w.w_symbol->s_name);
-        sub_vars_and_parse(x, x->rtcmix_script[(int)scriptnum]);
+        post("rtcmix~: playing \"%s\"", atom_getsymbol(x->scriptpath + scriptnum)->s_name);
+        sub_vars_and_parse(x, x->rtcmix_script[scriptnum]);
 }
 
 void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
         DEBUG( post ("clicked."); );
         x->buffer_changed = true;
-        DEBUG( post("x->scriptpath[x->current_script].a_w.w_symbol->s_name: %s", x->scriptpath[x->current_script].a_w.w_symbol->s_name); );
-        sys_vgui("exec %s %s &\n",x->editorpath->s_name, x->scriptpath[x->current_script].a_w.w_symbol->s_name);
+        DEBUG( post("x->scriptpath[x->current_script].a_w.w_symbol->s_name: %s", atom_getsymbol(x->scriptpath + x->current_script)->s_name); );
+        sys_vgui("exec %s %s &\n",x->editorpath->s_name, atom_getsymbol(x->scriptpath + x->current_script)->s_name);
 }
 
 void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
@@ -484,10 +485,10 @@ void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
 
 void rtcmix_setscript(t_rtcmix_tilde *x, t_float s)
 {
-        DEBUG(post("setscript: %d", (int)s); );
+        //DEBUG(post("setscript: %d", (int)s); );
         if (s >= 0 && s < MAX_SCRIPTS)
         {
-                DEBUG(post ("changed current script to %d", (int)s); );
+                post ("rtcmix~: changed current script to %d", (int)s);
                 x->current_script = (int)s;
         }
         else error ("%d is not a valid script number. (Must be 0 - %d)", (int)s, (int)(MAX_SCRIPTS-1));
