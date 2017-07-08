@@ -139,7 +139,7 @@ typedef struct _rtcmix_tilde
 								t_symbol *dylib;
 
 								// for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
-								bool flushflag;
+								bool resetflag;
 								t_float f;
 
 } t_rtcmix_tilde;

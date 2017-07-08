@@ -147,7 +147,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
                 //DEBUG(post("x->scriptpath + %d: %s", i, x->scriptpath[i].a_w.w_symbol->s_name););
         }
 
-        x->flushflag = false;
+        x->resetflag = false;
         x->rw_flag = none;
 
         //DEBUG(post("creating %d inlets and outlets and %d additional inlets",num_inoutputs,num_additional););
@@ -284,14 +284,6 @@ t_int *rtcmix_tilde_perform(t_int *w)
                 x->RTcmix_setPField(i, x->pfield_in[i]);
         }
 
-        // reset queue and heap if signalled
-        if (x->flushflag == true)
-        {
-                x->RTcmix_flushScore();
-                x->flushflag = false;
-        }
-
-
         for (int i = 0; i < x->num_channels; i++)
         {
                 in[i] = (float *)(w[i+2]);
@@ -319,6 +311,13 @@ t_int *rtcmix_tilde_perform(t_int *w)
         {
                 for(int i = 0; i < x->num_channels; i++)
                         *out[i]++ = (x->pd_outbuf)[j++];
+        }
+
+        // reset queue and heap if signalled
+        if (x->resetflag == true)
+        {
+                if (x->RTcmix_resetAudio) x->RTcmix_resetAudio(x->srate, x->num_channels, x->vector_size, 1);
+                x->resetflag = false;
         }
 
         return w + (2 * x->num_channels) + 3;
@@ -433,7 +432,7 @@ void rtcmix_flush(t_rtcmix_tilde *x)
 void rtcmix_tilde_bang(t_rtcmix_tilde *x)
 {
         DEBUG(post("rtcmix~: received bang"); );
-        //if (x->flushflag == true) return; // heap and queue being reset
+        if (x->resetflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0)
         {
                 error ("rtcmix~: can't interpret scorefile until DSP is on.");
@@ -449,7 +448,7 @@ void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float s)
 {
         int scriptnum = (int)s;
         DEBUG(post("received float %f",s); );
-        if (x->flushflag == true) return; // heap and queue being reset
+        if (x->resetflag == true) return; // heap and queue being reset
         if (canvas_dspstate == 0)
         {
                 error ("rtcmix~: can't interpret scorefile until DSP is on.");
@@ -784,7 +783,8 @@ void rtcmix_reference(t_rtcmix_tilde *x)
 void rtcmix_reset(t_rtcmix_tilde *x)
 {
         if (canvas_dspstate == 0) return;
-        if (x->RTcmix_resetAudio) x->RTcmix_resetAudio(x->srate, x->num_channels, x->vector_size, 1);
+        if (x->RTcmix_flushScore) x->RTcmix_flushScore();
+        x->resetflag = true;
 }
 
 char* ReadFile(char *filename)
