@@ -334,8 +334,8 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         freebytes (x->scriptpath, MAX_SCRIPTS * sizeof (*x->scriptpath));
         freebytes (x->pfield_in, sizeof(*x->pfield_in) * x->num_pinlets);
         for (int i = 0; i < MAX_SCRIPTS; i++)
-        //free (x->rtcmix_script[i]);
-          freebytes (x->rtcmix_script[i], sizeof(char) * MAXSCRIPTSIZE);
+                //free (x->rtcmix_script[i]);
+                freebytes (x->rtcmix_script[i], sizeof(char) * MAXSCRIPTSIZE);
         //free(x->rtcmix_script);
 
         outlet_free(x->outpointer);
@@ -439,7 +439,7 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
                 return;
         }
         post("rtcmix~: playing \"%s\"", x->scriptpath[x->current_script].a_w.w_symbol->s_name);
-        if (x->buffer_changed) rtcmix_read(x, x->scriptpath[x->current_script].a_w.w_symbol->s_name);
+        rtcmix_read(x, x->scriptpath[x->current_script].a_w.w_symbol->s_name);
         if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
         else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
