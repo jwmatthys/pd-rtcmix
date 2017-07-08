@@ -134,8 +134,8 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         DEBUG(post("rtcmix~: editor_path: %s", x->editorpath->s_name); );
 
         x->current_script = 0;
-        x->rtcmix_script = (char**) malloc(MAX_SCRIPTS * sizeof(char*));
-        x->scriptpath = (t_atom *) getbytes (sizeof(*x->scriptpath) * MAX_SCRIPTS);
+        x->rtcmix_script = (char**) malloc (MAX_SCRIPTS * sizeof(char*));
+        x->scriptpath = (t_atom *) malloc (MAX_SCRIPTS * sizeof(*x->scriptpath));
         x->vars_present = false; // for $ variables
 
         for (int i=0; i<MAX_SCRIPTS; i++)
@@ -144,7 +144,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
                 char _scriptpath[MAXPDSTRING];
                 sprintf(_scriptpath,"%s/%s%i.%s",x->tempfolder->s_name, TEMPFILENAME, i, SCOREEXTENSION);
                 SETSYMBOL(x->scriptpath + i, gensym(_scriptpath));
-                //DEBUG(post("x->scriptpath + %d: %s", i, x->scriptpath[i].a_w.w_symbol->s_name););
+                //DEBUG(post("x->scriptpath[%d]: %s", i, atom_getsymbol(x->scriptpath + i)->s_name););
         }
 
         x->resetflag = false;
@@ -358,7 +358,7 @@ void rtcmix_info(t_rtcmix_tilde *x)
         post("temporary files are located at %s", x->tempfolder->s_name);
         post("temporary rtcmixdylib.so is %s", x->dylib->s_name);
         post("rtcmix~ external is located at %s", x->canvas_path->s_name);
-        post("current scorefile is %s", x->scriptpath[x->current_script].a_w.w_symbol->s_name);
+        post("current scorefile is %s", atom_getsymbol(x->scriptpath + x->current_script)->s_name);
         post("using editor %s", x->editorpath->s_name);
         outlet_bang(x->outpointer);
 }
@@ -438,8 +438,8 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
                 error ("rtcmix~: can't interpret scorefile until DSP is on.");
                 return;
         }
-        post("rtcmix~: playing \"%s\"", x->scriptpath[x->current_script].a_w.w_symbol->s_name);
-        rtcmix_read(x, x->scriptpath[x->current_script].a_w.w_symbol->s_name);
+        post("rtcmix~: playing \"%s\"", atom_getsymbol(x->scriptpath + x->current_script)->s_name);
+        rtcmix_read(x, atom_getsymbol(x->scriptpath + x->current_script)->s_name);
         if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
         else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
@@ -467,7 +467,7 @@ void rtcmix_openeditor(t_rtcmix_tilde *x)
 {
         DEBUG( post ("clicked."); );
         x->buffer_changed = true;
-        DEBUG( post("x->scriptpath[x->current_script].a_w.w_symbol->s_name: %s", atom_getsymbol(x->scriptpath + x->current_script)->s_name); );
+        DEBUG( post("atom_getsymbol(x->scriptpath + x->current_script)->s_name: %s", atom_getsymbol(x->scriptpath + x->current_script)->s_name); );
         sys_vgui("exec %s %s &\n",x->editorpath->s_name, atom_getsymbol(x->scriptpath + x->current_script)->s_name);
 }
 
@@ -482,15 +482,16 @@ void rtcmix_editor (t_rtcmix_tilde *x, t_symbol *s)
         post("rtcmix~: setting the text editor to %s", x->editorpath->s_name);
 }
 
-void rtcmix_setscript(t_rtcmix_tilde *x, t_float s)
+void rtcmix_setscript(t_rtcmix_tilde *x, t_float f)
 {
         //DEBUG(post("setscript: %d", (int)s); );
+        int s = (int)f;
         if (s >= 0 && s < MAX_SCRIPTS)
         {
-                post ("rtcmix~: changed current script to %d", (int)s);
-                x->current_script = (int)s;
+                post ("rtcmix~: changed current script to %d", s);
+                x->current_script = s;
         }
-        else error ("%d is not a valid script number. (Must be 0 - %d)", (int)s, (int)(MAX_SCRIPTS-1));
+        else error ("%d is not a valid script number. (Must be 0 - %d)", s, (int)(MAX_SCRIPTS-1));
 }
 
 void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
@@ -499,6 +500,7 @@ void rtcmix_read(t_rtcmix_tilde *x, char* fullpath)
 
         char *buffer = malloc(MAXSCRIPTSIZE);
         buffer = ReadFile(fullpath);
+        if (!buffer) return; // this may happen with empty scorefile
         int lSize = strlen(buffer);
 
         if (lSize>MAXSCRIPTSIZE)
@@ -524,7 +526,7 @@ void rtcmix_write(t_rtcmix_tilde *x, char* filename)
 {
         DEBUG (post("write %s", filename); );
         char * _sys_cmd = malloc(MAXPDSTRING);
-        sprintf(_sys_cmd, "cp \"%s\" \"%s\"", x->scriptpath[x->current_script].a_w.w_symbol->s_name, filename);
+        sprintf(_sys_cmd, "cp \"%s\" \"%s\"", atom_getsymbol(x->scriptpath + x->current_script)->s_name, filename);
         if (system(_sys_cmd)) error ("rtcmix~: error saving %s",filename);
         else
         {
