@@ -11,8 +11,8 @@
 
 #define UNUSED(x) (void)(x)
 
-//#define DEBUG(x) // debug off
-#define DEBUG(x) x // debug on
+#define DEBUG(x) // debug off
+//#define DEBUG(x) x // debug on
 
 #ifdef MACOSX
 #define OS_OPENCMD "open" //MACOSX
@@ -271,13 +271,6 @@ t_int *rtcmix_tilde_perform(t_int *w)
         t_int vecsize = w[(2 * x->num_channels) + 2]; //number of samples per vector
         float *in[x->num_channels * vecsize]; //pointers to the input vectors
         float *out[x->num_channels * vecsize]; //pointers to the output vectors
-
-        //int i = x->num_outputs * vecsize;
-        //while (i--) out[i] = (float *)0.;
-
-        x->checkForBang();
-        x->checkForVals();
-        x->checkForPrint();
 
         for (int i = 0; i < x->num_pinlets; i++)
         {
@@ -601,8 +594,7 @@ void rtcmix_bangcallback(void *inContext)
 void rtcmix_valuescallback(float *values, int numValues, void *inContext)
 {
         t_rtcmix_tilde *x = (t_rtcmix_tilde *) inContext;
-        // BGG -- I should probably defer this one and the error posts also.  So far not a problem...
-        DEBUG(post("numValues: %d", numValues); );
+        DEBUG( post("numValues: %d", numValues); );
         if (numValues == 1)
                 outlet_float(x->outpointer, (double)(values[0]));
         else {
