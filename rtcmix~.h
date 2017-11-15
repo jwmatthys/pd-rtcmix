@@ -38,6 +38,7 @@ typedef enum { false, true } bool;
 #endif
 
 /*** RTCMIX FUNCTIONS ---------------------------------------------------------------------------***/
+/*
 typedef void (*RTcmix_dylibPtr)(void *);
 typedef void (*RTcmixBangCallback)(void *inContext);
 typedef void (*RTcmixValuesCallback)(float *values, int numValues, void *inContext);
@@ -45,11 +46,10 @@ typedef void (*RTcmixPrintCallback)(const char *printBuffer, void *inContext);
 typedef int (*RTcmix_initPtr)();
 typedef int (*RTcmix_destroyPtr)();
 typedef int (*RTcmix_setparamsPtr)(float sr, int nchans, int vecsize, int recording, int bus_count);
-/*
-   typedef void (*RTcmix_BangCallbackPtr)(void *inContext);
-   typedef void (*RTcmix_ValuesCallbackPtr)(float *values, int numValues, void *inContext);
-   typedef void (*RTcmix_PrintCallbackPtr)(const char *printBuffer, void *inContext);
- */
+//   typedef void (*RTcmix_BangCallbackPtr)(void *inContext);
+//   typedef void (*RTcmix_ValuesCallbackPtr)(float *values, int numValues, void *inContext);
+//   typedef void (*RTcmix_PrintCallbackPtr)(const char *printBuffer, void *inContext);
+
 typedef void (*RTcmix_setBangCallbackPtr)(RTcmixBangCallback inBangCallback, void *inContext);
 typedef void (*RTcmix_setValuesCallbackPtr)(RTcmixValuesCallback inValuesCallback, void *inContext);
 typedef void (*RTcmix_setPrintCallbackPtr)(RTcmixPrintCallback inPrintCallback, void *inContext);
@@ -73,7 +73,7 @@ typedef void (*RTcmix_setPFieldPtr)(int inlet, float pval);
 typedef void (*checkForBangPtr)();
 typedef void (*checkForValsPtr)();
 typedef void (*checkForPrintPtr)();
-
+*/
 /*** PD FUNCTIONS ---------------------------------------------------------------------------***/
 
 static t_class *rtcmix_tilde_class;
@@ -98,6 +98,7 @@ typedef struct _rtcmix_tilde
 								float *pd_outbuf;
 								float *pd_inbuf;
 
+/*
 								// RTcmix dylib access pointers
 								RTcmix_dylibPtr RTcmix_dylib;
 								RTcmix_initPtr RTcmix_init;
@@ -118,7 +119,7 @@ typedef struct _rtcmix_tilde
 								checkForBangPtr checkForBang;
 								checkForValsPtr checkForVals;
 								checkForPrintPtr checkForPrint;
-
+*/
 								// for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
 #define NVARS 9
 								char **var_array;
