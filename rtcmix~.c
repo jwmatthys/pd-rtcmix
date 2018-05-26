@@ -1,7 +1,7 @@
 #include "m_pd.h"
 #include "m_imp.h"
 #include "rtcmix~.h"
-//#include "../rtcmix/RTcmix_API.h"
+#include "../rtcmix/RTcmix_API.h"
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -11,8 +11,8 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG(x) // debug off
-//#define DEBUG(x) x // debug on
+//#define DEBUG(x) // debug off
+#define DEBUG(x) x // debug on
 
 #ifdef MACOSX
 #define OS_OPENCMD "open" //MACOSX
@@ -103,7 +103,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         // create temp folder
         if (!mkdtemp(_tempfolder)) error ("failed to create temp folder at %s", _tempfolder);
         x->tempfolder = gensym(_tempfolder);
-
+/*
         // create unique name for dylib
         sprintf(_template, "%s/RTcmix_dylib_XXXXXX", x->tempfolder->s_name);
         if (!mkstemp(_template)) error ("failed to create dylib temp name");
@@ -117,7 +117,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         sprintf(_sys_cmd, "cp %s/%s %s", x->libfolder->s_name, DYLIBNAME, x->dylib->s_name);
         if (system(_sys_cmd))
                 error ("rtcmix~: error copying dylib");
-
+*/
 #ifdef MACOSX
         sprintf (_editorpath, "python \"%s/%s\"", x->libfolder->s_name, "rtcmix_editor.py");
 #else
@@ -246,11 +246,11 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         dsp_addv(rtcmix_tilde_perform, (2 * x->num_channels) + 2,(t_int*)dsp_add_args);//add them to the signal chain
 
         // load the dylib
-        dlopen_and_errorcheck(x);
-        x->RTcmix_init();
-        x->RTcmix_setBangCallback(rtcmix_bangcallback, x);
-        x->RTcmix_setValuesCallback(rtcmix_valuescallback, x);
-        x->RTcmix_setPrintCallback(rtcmix_printcallback, x);
+        //dlopen_and_errorcheck(x);
+        RTcmix_init();
+        //RTcmix_setBangCallback(rtcmix_bangcallback, x);
+        //RTcmix_setValuesCallback(rtcmix_valuescallback, x);
+        //RTcmix_setPrintCallback(rtcmix_printcallback, x);
 
 // allocate the RTcmix i/o transfer buffers
         x->pd_inbuf = malloc(sizeof(float) * x->vector_size * x->num_channels);
@@ -261,8 +261,8 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         //for (int i = 0; i < (x->vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
 
         DEBUG(post("x->srate: %f, x->num_channels: %d, x->vector_size %d, 1, 0", x->srate, x->num_channels, x->vector_size); );
-        x->RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_channels);
-        x->RTcmix_setparams(x->srate, x->num_channels, x->vector_size, true, 0);
+        //RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_channels);
+        //RTcmix_setparams(x->srate, x->num_channels, x->vector_size, true, 0);
 }
 
 t_int *rtcmix_tilde_perform(t_int *w)
@@ -274,7 +274,7 @@ t_int *rtcmix_tilde_perform(t_int *w)
 
         for (int i = 0; i < x->num_pinlets; i++)
         {
-                x->RTcmix_setPField(i, x->pfield_in[i]);
+                //RTcmix_setPField(i, x->pfield_in[i]);
         }
 
         for (int i = 0; i < x->num_channels; i++)
@@ -297,7 +297,7 @@ t_int *rtcmix_tilde_perform(t_int *w)
                         (x->pd_inbuf)[j++] = *in[i]++;
         }
 
-        x->RTcmix_runAudio (x->pd_inbuf, x->pd_outbuf, 1);
+        //RTcmix_runAudio (x->pd_inbuf, x->pd_outbuf, 1);
 
         j = 0;
         for (int k = 0; k < vecsize; k++)
@@ -309,7 +309,7 @@ t_int *rtcmix_tilde_perform(t_int *w)
         // reset queue and heap if signalled
         if (x->resetflag == true)
         {
-                if (x->RTcmix_resetAudio) x->RTcmix_resetAudio(x->srate, x->num_channels, x->vector_size, 1);
+                //RTcmix_resetAudio(x->srate, x->num_channels, x->vector_size, 1);
                 x->resetflag = false;
         }
 
@@ -335,12 +335,12 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         pd_unbind(&x->x_obj.ob_pd, x->x_s);
         free(x->x_s);
 
-        if (x->RTcmix_dylib)
-        {
-                x->RTcmix_destroy();
-                dlclose(x->RTcmix_dylib);
+        //if (RTcmix_dylib)
+        //{
+                //RTcmix_destroy();
+                //dlclose(RTcmix_dylib);
                 freebytes (x->dylib, sizeof(x->dylib));
-        }
+        //}
         DEBUG(post ("rtcmix~ DESTROYED!"); );
 }
 
@@ -416,9 +416,10 @@ void rtcmix_varlist(t_rtcmix_tilde *x, t_symbol *s, short argc, t_atom *argv)
 // the "flush" message
 void rtcmix_flush(t_rtcmix_tilde *x)
 {
+        UNUSED(x);
         DEBUG( post("flushing"); );
         if (canvas_dspstate == 0) return;
-        if (x->RTcmix_flushScore) x->RTcmix_flushScore();
+        //if (RTcmix_flushScore) RTcmix_flushScore();
 }
 
 // bang triggers the current working script
@@ -434,7 +435,7 @@ void rtcmix_tilde_bang(t_rtcmix_tilde *x)
         post("rtcmix~: playing \"%s\"", atom_getsymbol(x->scriptpath + x->current_script)->s_name);
         rtcmix_read(x, atom_getsymbol(x->scriptpath + x->current_script)->s_name);
         if (x->vars_present) sub_vars_and_parse(x, x->rtcmix_script[x->current_script]);
-        else x->RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
+        //else RTcmix_parseScore(x->rtcmix_script[x->current_script], strlen(x->rtcmix_script[x->current_script]));
 }
 
 void rtcmix_tilde_float(t_rtcmix_tilde *x, t_float s)
@@ -629,78 +630,82 @@ void null_the_pointers(t_rtcmix_tilde *x)
         x->editorpath = NULL;
         x->libfolder = NULL;
         x->dylib = NULL; // this is the path to the dylib
-        x->RTcmix_dylib = NULL; // this is the dylib itself
-        x->RTcmix_init = NULL;
-        x->RTcmix_destroy = NULL;
-        x->RTcmix_setparams = NULL;
-        x->RTcmix_setBangCallback = NULL;
-        x->RTcmix_setValuesCallback = NULL;
-        x->RTcmix_setPrintCallback = NULL;
-        x->RTcmix_resetAudio = NULL;
-        x->RTcmix_setAudioBufferFormat = NULL;
-        x->RTcmix_runAudio = NULL;
-        x->RTcmix_parseScore = NULL;
-        x->RTcmix_flushScore = NULL;
-        x->RTcmix_setInputBuffer = NULL;
-        x->RTcmix_getBufferFrameCount = NULL;
-        x->RTcmix_getBufferChannelCount = NULL;
-        x->RTcmix_setPField = NULL;
+/*
+        RTcmix_dylib = NULL; // this is the dylib itself
+        RTcmix_init = NULL;
+        RTcmix_destroy = NULL;
+        RTcmix_setparams = NULL;
+        RTcmix_setBangCallback = NULL;
+        RTcmix_setValuesCallback = NULL;
+        RTcmix_setPrintCallback = NULL;
+        RTcmix_resetAudio = NULL;
+        RTcmix_setAudioBufferFormat = NULL;
+        RTcmix_runAudio = NULL;
+        RTcmix_parseScore = NULL;
+        RTcmix_flushScore = NULL;
+        RTcmix_setInputBuffer = NULL;
+        RTcmix_getBufferFrameCount = NULL;
+        RTcmix_getBufferChannelCount = NULL;
+        RTcmix_setPField = NULL;
         x->checkForBang = NULL;
         x->checkForVals = NULL;
         x->checkForPrint = NULL;
+        */
 }
 
 void dlopen_and_errorcheck (t_rtcmix_tilde *x)
-{
+{/*
         // reload, this reinits the RTcmix queue, etc.
-        if (x->RTcmix_dylib) dlclose(x->RTcmix_dylib);
+        if (RTcmix_dylib) dlclose(RTcmix_dylib);
 
-        x->RTcmix_dylib = dlopen(x->dylib->s_name, RTLD_NOW);
-        if (!x->RTcmix_dylib)
+        RTcmix_dylib = dlopen(x->dylib->s_name, RTLD_NOW);
+        if (!RTcmix_dylib)
         {
                 error("dlopen error loading dylib");
                 error("%s",dlerror());
         }
-        x->RTcmix_init = dlsym(x->RTcmix_dylib, "RTcmix_init");
-        if (!x->RTcmix_init) error("RTcmix could not call RTcmix_init()");
-        x->RTcmix_destroy = dlsym(x->RTcmix_dylib, "RTcmix_destroy");
-        if (!x->RTcmix_destroy) error("RTcmix could not call RTcmix_destroy()");
-        x->RTcmix_setparams = dlsym(x->RTcmix_dylib, "RTcmix_setparams");
-        if (!x->RTcmix_setparams) error("RTcmix could not call RTcmix_setparams()");
-        x->RTcmix_setBangCallback = dlsym(x->RTcmix_dylib, "RTcmix_setBangCallback");
-        if (!x->RTcmix_setBangCallback) error("RTcmix could not call RTcmix_setBangCallback()");
-        x->RTcmix_setValuesCallback = dlsym(x->RTcmix_dylib, "RTcmix_setValuesCallback");
-        if (!x->RTcmix_setValuesCallback) error("RTcmix could not call RTcmix_setValuesCallback()");
-        x->RTcmix_setPrintCallback = dlsym(x->RTcmix_dylib, "RTcmix_setPrintCallback");
-        if (!x->RTcmix_setPrintCallback) error("RTcmix could not call RTcmix_setPrintCallback()");
-        x->RTcmix_resetAudio = dlsym(x->RTcmix_dylib, "RTcmix_resetAudio");
-        if (!x->RTcmix_resetAudio) error("RTcmix could not call RTcmix_resetAudio()");
-        x->RTcmix_setAudioBufferFormat = dlsym(x->RTcmix_dylib, "RTcmix_setAudioBufferFormat");
-        if (!x->RTcmix_setAudioBufferFormat) error("RTcmix could not call RTcmix_setAudioBufferFormat()");
-        x->RTcmix_runAudio = dlsym(x->RTcmix_dylib, "RTcmix_runAudio");
-        if (!x->RTcmix_runAudio) error("RTcmix could not call RTcmix_runAudio()");
-        x->RTcmix_parseScore = dlsym(x->RTcmix_dylib, "RTcmix_parseScore");
-        if (!x->RTcmix_parseScore) error("RTcmix could not call RTcmix_parseScore()");
-        x->RTcmix_flushScore = dlsym(x->RTcmix_dylib, "RTcmix_flushScore");
-        if (!x->RTcmix_flushScore) error("RTcmix could not call RTcmix_flushScore()");
-        x->RTcmix_setInputBuffer = dlsym(x->RTcmix_dylib, "RTcmix_setInputBuffer");
-        if (!x->RTcmix_setInputBuffer) error("RTcmix could not call RTcmix_setInputBuffer()");
-        x->RTcmix_getBufferFrameCount = dlsym(x->RTcmix_dylib, "RTcmix_getBufferFrameCount");
-        if (!x->RTcmix_getBufferFrameCount) error("RTcmix could not call RTcmix_getBufferFrameCount()");
-        x->RTcmix_getBufferChannelCount = dlsym(x->RTcmix_dylib, "RTcmix_getBufferChannelCount");
-        if (!x->RTcmix_getBufferChannelCount) error("RTcmix could not call RTcmix_getBufferChannelCount()");
-        x->RTcmix_setPField = dlsym(x->RTcmix_dylib, "RTcmix_setPField");
-        if (!x->RTcmix_setPField) error("RTcmix could not call RTcmix_setPField()");
-        x->checkForBang = dlsym(x->RTcmix_dylib, "checkForBang");
+        RTcmix_init = dlsym(RTcmix_dylib, "RTcmix_init");
+        if (!RTcmix_init) error("RTcmix could not call RTcmix_init()");
+        RTcmix_destroy = dlsym(RTcmix_dylib, "RTcmix_destroy");
+        if (!RTcmix_destroy) error("RTcmix could not call RTcmix_destroy()");
+        RTcmix_setparams = dlsym(RTcmix_dylib, "RTcmix_setparams");
+        if (!RTcmix_setparams) error("RTcmix could not call RTcmix_setparams()");
+        RTcmix_setBangCallback = dlsym(RTcmix_dylib, "RTcmix_setBangCallback");
+        if (!RTcmix_setBangCallback) error("RTcmix could not call RTcmix_setBangCallback()");
+        RTcmix_setValuesCallback = dlsym(RTcmix_dylib, "RTcmix_setValuesCallback");
+        if (!RTcmix_setValuesCallback) error("RTcmix could not call RTcmix_setValuesCallback()");
+        RTcmix_setPrintCallback = dlsym(RTcmix_dylib, "RTcmix_setPrintCallback");
+        if (!RTcmix_setPrintCallback) error("RTcmix could not call RTcmix_setPrintCallback()");
+        RTcmix_resetAudio = dlsym(RTcmix_dylib, "RTcmix_resetAudio");
+        if (!RTcmix_resetAudio) error("RTcmix could not call RTcmix_resetAudio()");
+        RTcmix_setAudioBufferFormat = dlsym(RTcmix_dylib, "RTcmix_setAudioBufferFormat");
+        if (!RTcmix_setAudioBufferFormat) error("RTcmix could not call RTcmix_setAudioBufferFormat()");
+        RTcmix_runAudio = dlsym(RTcmix_dylib, "RTcmix_runAudio");
+        if (!RTcmix_runAudio) error("RTcmix could not call RTcmix_runAudio()");
+        RTcmix_parseScore = dlsym(RTcmix_dylib, "RTcmix_parseScore");
+        if (!RTcmix_parseScore) error("RTcmix could not call RTcmix_parseScore()");
+        RTcmix_flushScore = dlsym(RTcmix_dylib, "RTcmix_flushScore");
+        if (!RTcmix_flushScore) error("RTcmix could not call RTcmix_flushScore()");
+        RTcmix_setInputBuffer = dlsym(RTcmix_dylib, "RTcmix_setInputBuffer");
+        if (!RTcmix_setInputBuffer) error("RTcmix could not call RTcmix_setInputBuffer()");
+        RTcmix_getBufferFrameCount = dlsym(RTcmix_dylib, "RTcmix_getBufferFrameCount");
+        if (!RTcmix_getBufferFrameCount) error("RTcmix could not call RTcmix_getBufferFrameCount()");
+        RTcmix_getBufferChannelCount = dlsym(RTcmix_dylib, "RTcmix_getBufferChannelCount");
+        if (!RTcmix_getBufferChannelCount) error("RTcmix could not call RTcmix_getBufferChannelCount()");
+        RTcmix_setPField = dlsym(RTcmix_dylib, "RTcmix_setPField");
+        if (!RTcmix_setPField) error("RTcmix could not call RTcmix_setPField()");
+        x->checkForBang = dlsym(RTcmix_dylib, "checkForBang");
         if (!x->checkForBang) error("RTcmix could not call checkForBang()");
-        x->checkForVals = dlsym(x->RTcmix_dylib, "checkForVals");
+        x->checkForVals = dlsym(RTcmix_dylib, "checkForVals");
         if (!x->checkForVals) error("RTcmix could not call checkForVals()");
-        x->checkForPrint = dlsym(x->RTcmix_dylib, "checkForPrint");
+        x->checkForPrint = dlsym(RTcmix_dylib, "checkForPrint");
         if (!x->checkForPrint) error("RTcmix could not call checkForPrint()");
+        */
 }
 
 void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
 {
+  UNUSED(x);
         arraynumber_t *vec;
         int vecsize;
         if (canvas_dspstate == 1)
@@ -716,7 +721,7 @@ void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
                         int chans = sizeof(t_word)/sizeof(float);
                         DEBUG(post("rtcmix~: word size: %d, float size: %d",sizeof(t_word), sizeof(float)); );
                         post("rtcmix~: registered buffer \"%s\"", s->s_name);
-                        x->RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
+                        //RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
                 }
                 else
                 {
@@ -765,7 +770,7 @@ void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script)
                 }
                 //inchar++;
         }
-        x->RTcmix_parseScore(script_out, outchar);
+        //RTcmix_parseScore(script_out, outchar);
 }
 
 void rtcmix_reference(t_rtcmix_tilde *x)
@@ -777,7 +782,7 @@ void rtcmix_reference(t_rtcmix_tilde *x)
 void rtcmix_reset(t_rtcmix_tilde *x)
 {
         if (canvas_dspstate == 0) return;
-        if (x->RTcmix_flushScore) x->RTcmix_flushScore();
+        //RTcmix_flushScore();
         x->resetflag = true;
 }
 
