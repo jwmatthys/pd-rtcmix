@@ -1,11 +1,11 @@
 #include "m_pd.h"
 #include "g_canvas.h"
 
-#define DYLIBNAME "rtcmixdylib.so"
+//#define DYLIBNAME "rtcmixdylib.so"
 #define SCOREEXTENSION "sco"
 #define TEMPFILENAME "untitled"
 
-#define VERSION "0.92"
+#define VERSION "0.93"
 
 #define MAX_CHANNELS 12
 #define MAX_PINLETS 20
@@ -37,6 +37,7 @@ typedef enum { false, true } bool;
 #endif
 
 /*** RTCMIX FUNCTIONS ---------------------------------------------------------------------------***/
+/*
 typedef void (*RTcmix_dylibPtr)(void *);
 typedef void (*RTcmixBangCallback)(void *inContext);
 typedef void (*RTcmixValuesCallback)(float *values, int numValues, void *inContext);
@@ -67,7 +68,7 @@ typedef void (*RTcmix_setPFieldPtr)(int inlet, float pval);
 typedef void (*checkForBangPtr)();
 typedef void (*checkForValsPtr)();
 typedef void (*checkForPrintPtr)();
-
+*/
 /*** PD FUNCTIONS ---------------------------------------------------------------------------***/
 
 static t_class *rtcmix_tilde_class;
@@ -89,7 +90,7 @@ typedef struct _rtcmix_tilde
 								t_float *pd_inbuf;
 
 								// RTcmix dylib access pointers
-								RTcmix_dylibPtr RTcmix_dylib;
+/*								RTcmix_dylibPtr RTcmix_dylib;
 								RTcmix_initPtr RTcmix_init;
 								RTcmix_destroyPtr RTcmix_destroy;
 								RTcmix_setparamsPtr RTcmix_setparams;
@@ -108,7 +109,7 @@ typedef struct _rtcmix_tilde
 								checkForBangPtr checkForBang;
 								checkForValsPtr checkForVals;
 								checkForPrintPtr checkForPrint;
-
+*/
 								// for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
 #define NVARS 9
 								t_atom *var_array;
@@ -136,7 +137,7 @@ typedef struct _rtcmix_tilde
 								t_symbol *tempfolder;
 								t_symbol *editorpath;
 								t_symbol *libfolder;
-								t_symbol *dylib;
+								//t_symbol *dylib;
 
 								// for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
 								bool resetflag;

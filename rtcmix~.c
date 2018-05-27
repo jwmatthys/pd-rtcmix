@@ -117,7 +117,7 @@ void *rtcmix_tilde_new(t_symbol *s, int argc, t_atom *argv)
         sprintf(_sys_cmd, "cp %s/%s %s", x->libfolder->s_name, DYLIBNAME, x->dylib->s_name);
         if (system(_sys_cmd))
                 error ("rtcmix~: error copying dylib");
-*/
+ */
 #ifdef MACOSX
         sprintf (_editorpath, "python \"%s/%s\"", x->libfolder->s_name, "rtcmix_editor.py");
 #else
@@ -248,9 +248,9 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         // load the dylib
         //dlopen_and_errorcheck(x);
         RTcmix_init();
-        //RTcmix_setBangCallback(rtcmix_bangcallback, x);
-        //RTcmix_setValuesCallback(rtcmix_valuescallback, x);
-        //RTcmix_setPrintCallback(rtcmix_printcallback, x);
+        RTcmix_setBangCallback(rtcmix_bangcallback, x);
+        RTcmix_setValuesCallback(rtcmix_valuescallback, x);
+        RTcmix_setPrintCallback(rtcmix_printcallback, x);
 
 // allocate the RTcmix i/o transfer buffers
         x->pd_inbuf = malloc(sizeof(float) * x->vector_size * x->num_channels);
@@ -261,8 +261,8 @@ void rtcmix_tilde_dsp(t_rtcmix_tilde *x, t_signal **sp)
         //for (int i = 0; i < (x->vector_size * x->num_outputs); i++) x->pd_outbuf[i] = 0.0;
 
         DEBUG(post("x->srate: %f, x->num_channels: %d, x->vector_size %d, 1, 0", x->srate, x->num_channels, x->vector_size); );
-        //RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_channels);
-        //RTcmix_setparams(x->srate, x->num_channels, x->vector_size, true, 0);
+        RTcmix_setAudioBufferFormat(AudioFormat_32BitFloat_Normalized, x->num_channels);
+        RTcmix_setparams(x->srate, x->num_channels, x->vector_size, true, 0);
 }
 
 t_int *rtcmix_tilde_perform(t_int *w)
@@ -274,7 +274,7 @@ t_int *rtcmix_tilde_perform(t_int *w)
 
         for (int i = 0; i < x->num_pinlets; i++)
         {
-                //RTcmix_setPField(i, x->pfield_in[i]);
+                RTcmix_setPField(i, x->pfield_in[i]);
         }
 
         for (int i = 0; i < x->num_channels; i++)
@@ -297,7 +297,7 @@ t_int *rtcmix_tilde_perform(t_int *w)
                         (x->pd_inbuf)[j++] = *in[i]++;
         }
 
-        //RTcmix_runAudio (x->pd_inbuf, x->pd_outbuf, 1);
+        RTcmix_runAudio (x->pd_inbuf, x->pd_outbuf, 1);
 
         j = 0;
         for (int k = 0; k < vecsize; k++)
@@ -309,7 +309,7 @@ t_int *rtcmix_tilde_perform(t_int *w)
         // reset queue and heap if signalled
         if (x->resetflag == true)
         {
-                //RTcmix_resetAudio(x->srate, x->num_channels, x->vector_size, 1);
+                RTcmix_resetAudio(x->srate, x->num_channels, x->vector_size, 1);
                 x->resetflag = false;
         }
 
@@ -334,13 +334,7 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
         outlet_free(x->outpointer);
         pd_unbind(&x->x_obj.ob_pd, x->x_s);
         free(x->x_s);
-
-        //if (RTcmix_dylib)
-        //{
-                //RTcmix_destroy();
-                //dlclose(RTcmix_dylib);
-                freebytes (x->dylib, sizeof(x->dylib));
-        //}
+        RTcmix_destroy();
         DEBUG(post ("rtcmix~ DESTROYED!"); );
 }
 
@@ -349,7 +343,7 @@ void rtcmix_info(t_rtcmix_tilde *x)
         post("rtcmix~, v. %s by Joel Matthys", VERSION);
         post("compiled at %s on %s",__TIME__, __DATE__);
         post("temporary files are located at %s", x->tempfolder->s_name);
-        post("temporary rtcmixdylib.so is %s", x->dylib->s_name);
+        //post("temporary rtcmixdylib.so is %s", x->dylib->s_name);
         post("rtcmix~ external is located at %s", x->canvas_path->s_name);
         post("current scorefile is %s", atom_getsymbol(x->scriptpath + x->current_script)->s_name);
         post("using editor %s", x->editorpath->s_name);
@@ -419,7 +413,7 @@ void rtcmix_flush(t_rtcmix_tilde *x)
         UNUSED(x);
         DEBUG( post("flushing"); );
         if (canvas_dspstate == 0) return;
-        //if (RTcmix_flushScore) RTcmix_flushScore();
+        RTcmix_flushScore();
 }
 
 // bang triggers the current working script
@@ -629,7 +623,7 @@ void null_the_pointers(t_rtcmix_tilde *x)
         x->tempfolder = NULL;
         x->editorpath = NULL;
         x->libfolder = NULL;
-        x->dylib = NULL; // this is the path to the dylib
+        //x->dylib = NULL; // this is the path to the dylib
 /*
         RTcmix_dylib = NULL; // this is the dylib itself
         RTcmix_init = NULL;
@@ -650,7 +644,7 @@ void null_the_pointers(t_rtcmix_tilde *x)
         x->checkForBang = NULL;
         x->checkForVals = NULL;
         x->checkForPrint = NULL;
-        */
+ */
 }
 
 void dlopen_and_errorcheck (t_rtcmix_tilde *x)
@@ -700,12 +694,12 @@ void dlopen_and_errorcheck (t_rtcmix_tilde *x)
         if (!x->checkForVals) error("RTcmix could not call checkForVals()");
         x->checkForPrint = dlsym(RTcmix_dylib, "checkForPrint");
         if (!x->checkForPrint) error("RTcmix could not call checkForPrint()");
-        */
+  */
 }
 
 void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
 {
-  UNUSED(x);
+        UNUSED(x);
         arraynumber_t *vec;
         int vecsize;
         if (canvas_dspstate == 1)
@@ -721,7 +715,7 @@ void rtcmix_bufset(t_rtcmix_tilde *x, t_symbol *s)
                         int chans = sizeof(t_word)/sizeof(float);
                         DEBUG(post("rtcmix~: word size: %d, float size: %d",sizeof(t_word), sizeof(float)); );
                         post("rtcmix~: registered buffer \"%s\"", s->s_name);
-                        //RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
+                        RTcmix_setInputBuffer(s->s_name, (float*)vec, vecsize, chans, 0);
                 }
                 else
                 {
@@ -770,7 +764,7 @@ void sub_vars_and_parse (t_rtcmix_tilde *x, const char* script)
                 }
                 //inchar++;
         }
-        //RTcmix_parseScore(script_out, outchar);
+        RTcmix_parseScore(script_out, outchar);
 }
 
 void rtcmix_reference(t_rtcmix_tilde *x)
@@ -782,7 +776,7 @@ void rtcmix_reference(t_rtcmix_tilde *x)
 void rtcmix_reset(t_rtcmix_tilde *x)
 {
         if (canvas_dspstate == 0) return;
-        //RTcmix_flushScore();
+        RTcmix_flushScore();
         x->resetflag = true;
 }
 

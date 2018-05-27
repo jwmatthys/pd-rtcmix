@@ -3,6 +3,8 @@
 #X obj 109 161 bng 30 250 50 0 empty empty empty 17 7 0 10 -123226
 -1 -1;
 #X obj 109 217 rtcmix~ 2 doc/demo/LONGCHAIN.sco;
+#X msg 198 144 flush;
 #X connect 1 0 2 0;
 #X connect 2 0 0 0;
 #X connect 2 1 0 1;
+#X connect 3 0 2 0;
