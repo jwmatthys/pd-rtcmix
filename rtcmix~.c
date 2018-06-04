@@ -333,7 +333,7 @@ void rtcmix_tilde_free(t_rtcmix_tilde *x)
 
         outlet_free(x->outpointer);
         pd_unbind(&x->x_obj.ob_pd, x->x_s);
-        free(x->x_s);
+        //free(x->x_s);
 
         if (x->RTcmix_dylib)
         {

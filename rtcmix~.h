@@ -1,7 +1,7 @@
 #include "m_pd.h"
 #include "g_canvas.h"
 
-#define DYLIBNAME "rtcmixdylib.so"
+#define DYLIBNAME "librtcmixdylib.so"
 #define SCOREEXTENSION "sco"
 #define TEMPFILENAME "untitled"
 
