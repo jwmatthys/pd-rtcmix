@@ -1,15 +1,17 @@
 #include "m_pd.h"
-#include "g_canvas.h"
+#include "g_canvas.h"    /* just for glist_getfont, bother */
 
-#define DYLIBNAME "librtcmixdylib.so"
+#define DYLIBNAME "rtcmixdylib.so"
 #define SCOREEXTENSION "sco"
 #define TEMPFILENAME "untitled"
 
-#define VERSION "0.92"
+// BGG my recompile
+#define VERSION "0.93"
 
-#define MAX_CHANNELS 12
-#define MAX_PINLETS 20
+#define MAX_INPUTS 12
+#define MAX_OUTPUTS 12
 #define MAX_SCRIPTS 20 //how many scripts can we store internally
+#define MAX_PINLETS 10
 #define MAXSCRIPTSIZE 16384
 
 // JWM: since Tk's openpanel & savepanel both use callback(),
@@ -44,6 +46,11 @@ typedef void (*RTcmixPrintCallback)(const char *printBuffer, void *inContext);
 typedef int (*RTcmix_initPtr)();
 typedef int (*RTcmix_destroyPtr)();
 typedef int (*RTcmix_setparamsPtr)(float sr, int nchans, int vecsize, int recording, int bus_count);
+/*
+   typedef void (*RTcmix_BangCallbackPtr)(void *inContext);
+   typedef void (*RTcmix_ValuesCallbackPtr)(float *values, int numValues, void *inContext);
+   typedef void (*RTcmix_PrintCallbackPtr)(const char *printBuffer, void *inContext);
+ */
 typedef void (*RTcmix_setBangCallbackPtr)(RTcmixBangCallback inBangCallback, void *inContext);
 typedef void (*RTcmix_setValuesCallbackPtr)(RTcmixValuesCallback inValuesCallback, void *inContext);
 typedef void (*RTcmix_setPrintCallbackPtr)(RTcmixPrintCallback inPrintCallback, void *inContext);
@@ -78,15 +85,19 @@ typedef struct _rtcmix_tilde
 								t_object x_obj;
 
 								//variables specific to this object
-								t_float srate;                                  //sample rate
+								float srate;                                  //sample rate
 								t_int vector_size;
-								t_int num_channels; //number of inputs and outputs
-								t_int num_pinlets; // number of inlets for dynamic PField control
-								t_float *pfield_in; // values received for dynamic PFields
+								short num_inputs, num_outputs; //number of inputs and outputs
+								short num_pinlets; // number of inlets for dynamic PField control
+								float *pfield_in; // values received for dynamic PFields
 								t_outlet *outpointer;
+								//t_inlet **signal_inlets;
+								//t_inlet **pfield_inlets;
+								//t_outlet **signal_outlets;
 
-								t_float *pd_outbuf;
-								t_float *pd_inbuf;
+								char *tempfolder;
+								float *pd_outbuf;
+								float *pd_inbuf;
 
 								// RTcmix dylib access pointers
 								RTcmix_dylibPtr RTcmix_dylib;
@@ -111,19 +122,18 @@ typedef struct _rtcmix_tilde
 
 								// for the rtmix_var() and rtcmix_tilde_varlist() $n variable scheme
 #define NVARS 9
-								t_atom *var_array;
+								char **var_array;
 
 								// stuff for check_vals
 #define MAXDISPARGS 1024 // from rtcmix_tilde H/maxdispargs.h
-								t_float thevals[MAXDISPARGS];
+								float thevals[MAXDISPARGS];
 								t_atom valslist[MAXDISPARGS];
 
 								// editor stuff
 								char **rtcmix_script;
 								t_int current_script;
 								bool vars_present;
-								t_atom *scriptpath;
-
+								char **script_path;
 								// since both openpanel and savepanel use the same callback method, we
 								// have to differentiate whether the callback refers to an open or a save
 								enum read_write_flags rw_flag;
@@ -133,13 +143,12 @@ typedef struct _rtcmix_tilde
 								t_canvas *x_canvas;
 								t_symbol *canvas_path;
 								t_symbol *x_s;
-								t_symbol *tempfolder;
-								t_symbol *editorpath;
-								t_symbol *libfolder;
-								t_symbol *dylib;
+								char *editorpath;
+								char *libfolder;
+								char *dylib;
 
 								// for flushing all events on the queue/heap (resets to new ones inside rtcmix_tilde)
-								bool resetflag;
+								bool flushflag;
 								t_float f;
 
 } t_rtcmix_tilde;
